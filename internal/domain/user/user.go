@@ -13,6 +13,7 @@ const (
 	StatusActive    Status = "active"
 	StatusInactive  Status = "inactive"
 	StatusSuspended Status = "suspended"
+	StatusLocked    Status = "locked"
 	StatusDeleted   Status = "deleted"
 )
 
