@@ -207,7 +207,7 @@ func TestMigrationRunner_Up(t *testing.T) {
 	defer func() { _ = db.Close() }()
 
 	// Create migration runner
-	runner := NewMigrationRunner(db, "../../../../migrations")
+	runner := NewMigrationRunner(db, "../../../migrations")
 
 	// Run migrations up
 	err = runner.Up(ctx)
@@ -264,7 +264,7 @@ func TestMigrationRunner_Down(t *testing.T) {
 	defer func() { _ = db.Close() }()
 
 	// Create migration runner
-	runner := NewMigrationRunner(db, "../../../../migrations")
+	runner := NewMigrationRunner(db, "../../../migrations")
 
 	// Run migrations up first
 	err = runner.Up(ctx)
