@@ -73,7 +73,7 @@ func TestNewPostgresConnection(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, db)
 				if db != nil {
-					db.Close()
+					_ = db.Close()
 				}
 			}
 		})
@@ -121,7 +121,7 @@ func TestPostgresConnection_Integration(t *testing.T) {
 	db, err := NewPostgresConnection(config)
 	require.NoError(t, err)
 	require.NotNil(t, db)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Test ping
 	err = db.Ping(ctx)
@@ -217,7 +217,7 @@ func TestMigrationRunner_Up(t *testing.T) {
 	db, err := NewPostgresConnection(config)
 	require.NoError(t, err)
 	require.NotNil(t, db)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Create migration runner
 	runner := NewMigrationRunner(db, "../../../../migrations")
@@ -274,7 +274,7 @@ func TestMigrationRunner_Down(t *testing.T) {
 	db, err := NewPostgresConnection(config)
 	require.NoError(t, err)
 	require.NotNil(t, db)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Create migration runner
 	runner := NewMigrationRunner(db, "../../../../migrations")
