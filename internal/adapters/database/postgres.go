@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -160,9 +164,6 @@ func (m *MigrationRunner) Validate() error {
 
 // Up runs all pending migrations
 func (m *MigrationRunner) Up(ctx context.Context) error {
-	// For now, we'll implement a simple version
-	// In production, we'd use golang-migrate library
-
 	// Create schema_migrations table if not exists
 	query := `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -175,7 +176,62 @@ func (m *MigrationRunner) Up(ctx context.Context) error {
 		return fmt.Errorf("failed to create schema_migrations table: %w", err)
 	}
 
-	// TODO: Read and apply migration files from m.migrationsDir
+	// Read migration files
+	files, err := os.ReadDir(m.migrationsDir)
+	if err != nil {
+		return fmt.Errorf("failed to read migrations directory: %w", err)
+	}
+
+	// Filter and sort up migration files
+	var upMigrations []string
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".up.sql") {
+			upMigrations = append(upMigrations, file.Name())
+		}
+	}
+	sort.Strings(upMigrations)
+
+	// Apply each migration
+	for _, fileName := range upMigrations {
+		// Extract version from filename (e.g., "001_create_users_table.up.sql" -> 1)
+		parts := strings.Split(fileName, "_")
+		if len(parts) < 2 {
+			continue
+		}
+
+		version, err := strconv.ParseInt(parts[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse version from %s: %w", fileName, err)
+		}
+
+		// Check if migration already applied
+		var exists bool
+		err = m.db.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)", version).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("failed to check migration version %d: %w", version, err)
+		}
+
+		if exists {
+			continue // Skip already applied migration
+		}
+
+		// Read migration file
+		filePath := filepath.Join(m.migrationsDir, fileName)
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to read migration file %s: %w", fileName, err)
+		}
+
+		// Apply migration
+		if err := m.db.Exec(ctx, string(content)); err != nil {
+			return fmt.Errorf("failed to apply migration %s: %w", fileName, err)
+		}
+
+		// Record migration
+		if err := m.db.Exec(ctx, "INSERT INTO schema_migrations (version, dirty) VALUES ($1, $2)", version, false); err != nil {
+			return fmt.Errorf("failed to record migration %d: %w", version, err)
+		}
+	}
 
 	return nil
 }
