@@ -15,6 +15,7 @@
 *.out
 coverage.tmp
 coverage.html
+2025-08-05-this-session-is-being-continued-from-a-previous-co.txt
 
 # Go workspace file
 go.work
