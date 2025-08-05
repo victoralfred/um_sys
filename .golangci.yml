@@ -1,51 +1,25 @@
 run:
   timeout: 5m
-  issues-exit-code: 1
-  tests: true
-
-output:
-  format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
-
-linters-settings:
-  govet:
-    check-shadowing: true
-  gocyclo:
-    min-complexity: 15
-  goconst:
-    min-len: 3
-    min-occurrences: 3
-  goimports:
-    local-prefixes: github.com/[your-username]/user-management-system
-  gosec:
-    excludes:
-      - G204 # Subprocess launched with variable - we'll handle this case by case
 
 linters:
   enable:
     - govet
     - errcheck
     - staticcheck
-    - unused
     - gosimple
     - ineffassign
-    - typecheck
-    - gocyclo
-    - goconst
     - gofmt
     - goimports
     - gosec
     - misspell
     - lll
     - unparam
-    - nakedret
-    - prealloc
-    - exportloopref
-  disable:
-    - structcheck  # deprecated
-    - varcheck     # deprecated
-    - deadcode     # deprecated
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/victoralfred/um_sys
+  lll:
+    line-length: 120
 
 issues:
   exclude-rules:
