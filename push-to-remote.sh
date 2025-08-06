@@ -49,6 +49,15 @@ git push -u origin feature/mfa-support
 git push -u origin feature/subscription-billing
 git push -u origin feature/password-policies
 git push -u origin feature/auth-implementation
+git push -u origin feature/analytics-extensions
+git push -u origin feature/background-jobs
+git push -u origin feature/enterprise-features
+git push -u origin feature/feature-flags
+git push -u origin feature/job-configuration-api
+git push -u origin feature/redis-session-management
+git push -u origin feature/refresh-logout-handlers
+git push -u origin feature/usage-analytics-metrics
+git push -u origin feature/user-profile-management
 
 echo -e "${GREEN}✓ All branches pushed successfully!${NC}"
 
