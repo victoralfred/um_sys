@@ -35,18 +35,20 @@ type HTTPServer struct {
 
 // Services holds all service dependencies - Dependency Inversion Principle
 type Services struct {
-	UserService    *services.UserService
-	TokenService   middleware.TokenService // Using interface for middleware compatibility
-	RBACService    middleware.RBACService  // Using interface for middleware compatibility
-	MFAService     *services.MFAService
-	BillingService *services.BillingService
-	AuditService   *services.AuditService
-	FeatureService *services.FeatureService
+	UserService      *services.UserService
+	TokenService     middleware.TokenService // Using interface for middleware compatibility
+	RBACService      middleware.RBACService  // Using interface for middleware compatibility
+	MFAService       *services.MFAService
+	BillingService   *services.BillingService
+	AuditService     *services.AuditService
+	FeatureService   *services.FeatureService
+	AnalyticsService *services.AnalyticsService
 
 	// Handlers
-	AuthHandler    *handlers.AuthHandler
-	ProfileHandler *handlers.ProfileHandler
-	DocsHandler    *handlers.DocsHandler
+	AuthHandler      *handlers.AuthHandler
+	ProfileHandler   *handlers.ProfileHandler
+	DocsHandler      *handlers.DocsHandler
+	AnalyticsHandler *handlers.AnalyticsHandler
 }
 
 // New creates a new server instance - Factory pattern
@@ -76,6 +78,11 @@ func (s *HTTPServer) setupMiddleware() {
 
 	// Request ID middleware
 	s.router.Use(middleware.RequestID())
+
+	// Analytics middleware (if enabled)
+	if s.services.AnalyticsService != nil {
+		s.router.Use(middleware.AnalyticsMiddleware(s.services.AnalyticsService))
+	}
 
 	// CORS configuration
 	s.router.Use(cors.New(cors.Config{
@@ -246,6 +253,28 @@ func (s *HTTPServer) setupProtectedRoutes(rg *gin.RouterGroup) {
 		features.POST("/track", s.notImplemented)
 	}
 
+	// Analytics endpoints
+	analytics := rg.Group("/analytics")
+	{
+		if s.services.AnalyticsHandler != nil {
+			analytics.POST("/events", s.services.AnalyticsHandler.TrackEvent)
+			analytics.POST("/metrics", s.services.AnalyticsHandler.RecordMetric)
+			analytics.GET("/events", s.services.AnalyticsHandler.GetEvents)
+			analytics.GET("/metrics", s.services.AnalyticsHandler.GetMetrics)
+			analytics.GET("/stats", s.services.AnalyticsHandler.GetUsageStats)
+			analytics.GET("/dashboard", s.services.AnalyticsHandler.GetDashboard)
+			analytics.GET("/export", s.services.AnalyticsHandler.ExportData)
+		} else {
+			analytics.POST("/events", s.notImplemented)
+			analytics.POST("/metrics", s.notImplemented)
+			analytics.GET("/events", s.notImplemented)
+			analytics.GET("/metrics", s.notImplemented)
+			analytics.GET("/stats", s.notImplemented)
+			analytics.GET("/dashboard", s.notImplemented)
+			analytics.GET("/export", s.notImplemented)
+		}
+	}
+
 	// Compliance
 	compliance := rg.Group("/compliance")
 	{
@@ -304,6 +333,24 @@ func (s *HTTPServer) setupAdminRoutes(rg *gin.RouterGroup) {
 		audit.GET("/logs", s.notImplemented)
 		audit.GET("/alerts", s.notImplemented)
 		audit.POST("/alerts", s.notImplemented)
+	}
+
+	// Admin analytics (extended access)
+	analytics := rg.Group("/analytics")
+	{
+		if s.services.AnalyticsHandler != nil {
+			analytics.GET("/events", s.services.AnalyticsHandler.GetEvents)
+			analytics.GET("/metrics", s.services.AnalyticsHandler.GetMetrics)
+			analytics.GET("/stats", s.services.AnalyticsHandler.GetUsageStats)
+			analytics.GET("/dashboard", s.services.AnalyticsHandler.GetDashboard)
+			analytics.GET("/export", s.services.AnalyticsHandler.ExportData)
+		} else {
+			analytics.GET("/events", s.notImplemented)
+			analytics.GET("/metrics", s.notImplemented)
+			analytics.GET("/stats", s.notImplemented)
+			analytics.GET("/dashboard", s.notImplemented)
+			analytics.GET("/export", s.notImplemented)
+		}
 	}
 }
 
