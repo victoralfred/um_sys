@@ -12,8 +12,6 @@ import (
 )
 
 func TestJobConfigurationService(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Create job configuration", func(t *testing.T) {
 		service := NewJobConfigurationService()
 		userID := uuid.New()
@@ -407,7 +405,6 @@ func TestSoftDeleteCleanupHandler(t *testing.T) {
 		handler.SetTestData(testConfigs)
 
 		// Run in dry run mode
-		jobPayload := map[string]interface{}{}
 		j := &job.BackgroundJob{
 			ID:      uuid.New(),
 			Type:    "soft_delete_cleanup",
