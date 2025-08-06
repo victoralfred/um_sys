@@ -8,8 +8,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // FeatureFlagEvaluator evaluates feature flags
@@ -207,7 +205,7 @@ func (e *FeatureFlagEvaluator) getPropertyValue(property string, context Evaluat
 		// Support nested properties with dot notation
 		parts := strings.Split(property, ".")
 		current := interface{}(context.Properties)
-		
+
 		for _, part := range parts {
 			switch v := current.(type) {
 			case map[string]interface{}:
@@ -235,7 +233,7 @@ func (e *FeatureFlagEvaluator) compareEquals(a, b interface{}) bool {
 func (e *FeatureFlagEvaluator) compareNumeric(a, b interface{}, op string) bool {
 	aFloat, aOk := toFloat64(a)
 	bFloat, bOk := toFloat64(b)
-	
+
 	if !aOk || !bOk {
 		return false
 	}
@@ -281,7 +279,7 @@ func (e *FeatureFlagEvaluator) compareContains(value, substring interface{}) boo
 func (e *FeatureFlagEvaluator) compareTime(a, b interface{}, op string) bool {
 	aTime, aOk := toTime(a)
 	bTime, bOk := toTime(b)
-	
+
 	if !aOk || !bOk {
 		return false
 	}
@@ -323,7 +321,7 @@ func (e *FeatureFlagEvaluator) isInSchedule(schedule *Schedule, currentTime time
 		currentMinutes := currentTime.Hour()*60 + currentTime.Minute()
 		startMinutes := schedule.TimeOfDay.StartHour*60 + schedule.TimeOfDay.StartMinute
 		endMinutes := schedule.TimeOfDay.EndHour*60 + schedule.TimeOfDay.EndMinute
-		
+
 		if currentMinutes < startMinutes || currentMinutes > endMinutes {
 			return false
 		}

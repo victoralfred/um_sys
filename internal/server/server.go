@@ -35,13 +35,13 @@ type HTTPServer struct {
 
 // Services holds all service dependencies - Dependency Inversion Principle
 type Services struct {
-	UserService      *services.UserService
-	TokenService     middleware.TokenService // Using interface for middleware compatibility
-	RBACService      middleware.RBACService  // Using interface for middleware compatibility
-	MFAService       *services.MFAService
-	BillingService   *services.BillingService
-	AuditService     *services.AuditService
-	FeatureService   *services.FeatureService
+	UserService    *services.UserService
+	TokenService   middleware.TokenService // Using interface for middleware compatibility
+	RBACService    middleware.RBACService  // Using interface for middleware compatibility
+	MFAService     *services.MFAService
+	BillingService *services.BillingService
+	AuditService   *services.AuditService
+	// FeatureService   *services.FeatureService // Replaced with FeatureFlagService
 	AnalyticsService *services.AnalyticsService
 
 	// Handlers

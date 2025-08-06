@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFeatureFlag(t *testing.T) {
@@ -15,15 +14,15 @@ func TestFeatureFlag(t *testing.T) {
 
 	t.Run("Create and validate feature flag", func(t *testing.T) {
 		flag := &FeatureFlag{
-			ID:          uuid.New(),
-			Key:         "new-dashboard",
-			Name:        "New Dashboard UI",
-			Description: "Enable the redesigned dashboard interface",
-			Type:        FlagTypeBoolean,
+			ID:           uuid.New(),
+			Key:          "new-dashboard",
+			Name:         "New Dashboard UI",
+			Description:  "Enable the redesigned dashboard interface",
+			Type:         FlagTypeBoolean,
 			DefaultValue: false,
-			Enabled:     true,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
+			Enabled:      true,
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
 		}
 
 		assert.NotNil(t, flag)

@@ -22,11 +22,11 @@ func TestFeatureFlagService(t *testing.T) {
 		flagDescription := "Enable new dashboard design for users"
 		defaultValue := false
 
-		flag, err := service.CreateFlag(ctx, flagKey, flagName, flagDescription, defaultValue)
+		createdFlag, err := service.CreateFlag(ctx, flagKey, flagName, flagDescription, defaultValue)
 		assert.NoError(t, err)
-		assert.NotNil(t, flag)
-		assert.Equal(t, flagKey, flag.Key)
-		assert.Equal(t, flagName, flag.Name)
+		assert.NotNil(t, createdFlag)
+		assert.Equal(t, flagKey, createdFlag.Key)
+		assert.Equal(t, flagName, createdFlag.Name)
 
 		// Retrieve the flag
 		retrieved, err := service.GetFlag(ctx, flagKey)
@@ -41,7 +41,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "feature-x"
-		flag, err := service.CreateFlag(ctx, flagKey, "Feature X", "Test feature", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Feature X", "Test feature", false)
 		require.NoError(t, err)
 
 		// Evaluate for a user
@@ -57,7 +57,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "beta-feature"
-		flag, err := service.CreateFlag(ctx, flagKey, "Beta Feature", "Beta testing", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Beta Feature", "Beta testing", false)
 		require.NoError(t, err)
 
 		// Add user to beta list
@@ -69,7 +69,7 @@ func TestFeatureFlagService(t *testing.T) {
 		result, err := service.EvaluateForUser(ctx, flagKey, targetUserID, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, true, result.Value)
-		assert.Equal(t, "user_targeted", result.Reason)
+		assert.Equal(t, "rule_match", result.Reason)
 
 		// Evaluate for non-targeted user
 		otherUserID := uuid.New()
@@ -84,7 +84,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag with percentage rollout
 		flagKey := "gradual-rollout"
-		flag, err := service.CreateFlag(ctx, flagKey, "Gradual Rollout", "50% rollout", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Gradual Rollout", "50% rollout", false)
 		require.NoError(t, err)
 
 		// Set percentage rollout
@@ -99,7 +99,7 @@ func TestFeatureFlagService(t *testing.T) {
 			userID := uuid.New()
 			result, err := service.EvaluateForUser(ctx, flagKey, userID, nil)
 			assert.NoError(t, err)
-			
+
 			if result.Value.(bool) {
 				enabledCount++
 			}
@@ -115,7 +115,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "premium-feature"
-		flag, err := service.CreateFlag(ctx, flagKey, "Premium Feature", "Premium only", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Premium Feature", "Premium only", false)
 		require.NoError(t, err)
 
 		// Add property rule
@@ -145,16 +145,16 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create string flag
 		flagKey := "button-color"
-		flag, err := service.CreateStringFlag(ctx, flagKey, "Button Color", "UI test", "blue")
+		_, err := service.CreateStringFlag(ctx, flagKey, "Button Color", "UI test", "blue")
 		require.NoError(t, err)
 
 		// Add variants
 		err = service.AddVariant(ctx, flagKey, "variant-a", "green", 33)
 		require.NoError(t, err)
-		
+
 		err = service.AddVariant(ctx, flagKey, "variant-b", "red", 33)
 		require.NoError(t, err)
-		
+
 		err = service.AddVariant(ctx, flagKey, "control", "blue", 34)
 		require.NoError(t, err)
 
@@ -185,18 +185,18 @@ func TestFeatureFlagService(t *testing.T) {
 		}
 
 		flagKey := "api-config"
-		flag, err := service.CreateJSONFlag(ctx, flagKey, "API Config", "API configuration", defaultConfig)
+		_, err := service.CreateJSONFlag(ctx, flagKey, "API Config", "API configuration", defaultConfig)
 		require.NoError(t, err)
 
 		// Evaluate configuration
 		userID := uuid.New()
 		result, err := service.EvaluateForUser(ctx, flagKey, userID, nil)
 		assert.NoError(t, err)
-		
+
 		config := result.Value.(map[string]interface{})
-		assert.Equal(t, float64(100), config["rate_limit"])
-		assert.Equal(t, float64(5000), config["timeout_ms"])
-		assert.Equal(t, float64(3), config["retry_count"])
+		assert.Equal(t, 100, config["rate_limit"])
+		assert.Equal(t, 5000, config["timeout_ms"])
+		assert.Equal(t, 3, config["retry_count"])
 	})
 
 	t.Run("Bulk evaluation", func(t *testing.T) {
@@ -233,7 +233,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "override-test"
-		flag, err := service.CreateFlag(ctx, flagKey, "Override Test", "Test overrides", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Override Test", "Test overrides", false)
 		require.NoError(t, err)
 
 		// Create override for specific user
@@ -259,7 +259,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "disabled-flag"
-		flag, err := service.CreateFlag(ctx, flagKey, "Disabled Flag", "Test disabled", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Disabled Flag", "Test disabled", false)
 		require.NoError(t, err)
 
 		// Disable flag
@@ -279,7 +279,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "env-feature"
-		flag, err := service.CreateFlag(ctx, flagKey, "Env Feature", "Environment specific", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Env Feature", "Environment specific", false)
 		require.NoError(t, err)
 
 		// Enable for production only
@@ -303,7 +303,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "updateable-flag"
-		flag, err := service.CreateFlag(ctx, flagKey, "Updateable Flag", "Test updates", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Updateable Flag", "Test updates", false)
 		require.NoError(t, err)
 
 		// Update flag
@@ -323,7 +323,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "deletable-flag"
-		flag, err := service.CreateFlag(ctx, flagKey, "Deletable Flag", "Test deletion", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Deletable Flag", "Test deletion", false)
 		require.NoError(t, err)
 
 		// Delete flag
@@ -341,7 +341,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag
 		flagKey := "tracked-flag"
-		flag, err := service.CreateFlag(ctx, flagKey, "Tracked Flag", "Track changes", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Tracked Flag", "Track changes", false)
 		require.NoError(t, err)
 
 		// Make some changes
@@ -352,7 +352,7 @@ func TestFeatureFlagService(t *testing.T) {
 		history, err := service.GetFlagHistory(ctx, flagKey)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, history)
-		
+
 		// Should have create and update events
 		assert.GreaterOrEqual(t, len(history), 2)
 	})
@@ -362,7 +362,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag with percentage
 		flagKey := "consistent-rollout"
-		flag, err := service.CreateFlag(ctx, flagKey, "Consistent Rollout", "Test consistency", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Consistent Rollout", "Test consistency", false)
 		require.NoError(t, err)
 
 		err = service.SetPercentageRollout(ctx, flagKey, 30)
@@ -386,7 +386,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create experiment
 		flagKey := "homepage-experiment"
-		flag, err := service.CreateStringFlag(ctx, flagKey, "Homepage Experiment", "A/B test", "control")
+		_, err := service.CreateStringFlag(ctx, flagKey, "Homepage Experiment", "A/B test", "control")
 		require.NoError(t, err)
 
 		// Create experiment with variants
@@ -424,7 +424,7 @@ func TestFeatureFlagService(t *testing.T) {
 
 		// Create flag with schedule
 		flagKey := "scheduled-feature"
-		flag, err := service.CreateFlag(ctx, flagKey, "Scheduled Feature", "Time-based", false)
+		_, err := service.CreateFlag(ctx, flagKey, "Scheduled Feature", "Time-based", false)
 		require.NoError(t, err)
 
 		// Schedule activation

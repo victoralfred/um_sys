@@ -627,7 +627,7 @@ func (s *FunnelService) exportAsCSV(funnelID uuid.UUID, analysis *FunnelAnalysis
 
 	// Write header
 	header := []string{"user_id", "step_name", "timestamp", "completed"}
-	writer.Write(header)
+	_ = writer.Write(header)
 
 	// Simulate data rows
 	for i := 0; i < 10; i++ {
@@ -638,7 +638,7 @@ func (s *FunnelService) exportAsCSV(funnelID uuid.UUID, analysis *FunnelAnalysis
 				time.Now().Add(-time.Duration(i) * time.Hour).Format(time.RFC3339),
 				"true",
 			}
-			writer.Write(row)
+			_ = writer.Write(row)
 		}
 	}
 

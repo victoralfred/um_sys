@@ -140,7 +140,7 @@ type CacheService interface {
 type EvaluationEngine interface {
 	Evaluate(flag *Flag, context Context) (*Evaluation, error)
 
-	EvaluateRule(rule Rule, context Context) (bool, error)
+	EvaluateRule(rule TargetingRule, context Context) (bool, error)
 
 	EvaluateCondition(condition Condition, context Context) (bool, error)
 
