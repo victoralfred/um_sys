@@ -10,7 +10,7 @@ import (
 
 func TestPasswordPolicy_NewDefaultPolicy(t *testing.T) {
 	policy := NewDefaultPasswordPolicy()
-	
+
 	assert.NotNil(t, policy)
 	assert.Equal(t, 12, policy.MinLength)
 	assert.Equal(t, 128, policy.MaxLength)
@@ -62,7 +62,7 @@ func TestPasswordValidator_ValidateLength(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			validator := NewPasswordValidator(tt.policy)
 			result, err := validator.Validate(tt.password, "", "")
-			
+
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.errMsg)
@@ -140,7 +140,7 @@ func TestPasswordValidator_ValidateComplexity(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			validator := NewPasswordValidator(tt.policy)
 			result, err := validator.Validate(tt.password, "", "")
-			
+
 			if tt.wantErr {
 				assert.False(t, result.IsValid)
 				assert.Contains(t, strings.Join(result.Errors, " "), tt.errMsg)
@@ -196,7 +196,7 @@ func TestPasswordValidator_ProhibitSequential(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			validator := NewPasswordValidator(tt.policy)
 			result, err := validator.Validate(tt.password, "", "")
-			
+
 			if tt.wantErr {
 				assert.False(t, result.IsValid)
 				assert.Contains(t, strings.Join(result.Errors, " "), tt.errMsg)
@@ -242,7 +242,7 @@ func TestPasswordValidator_ProhibitRepeating(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			validator := NewPasswordValidator(tt.policy)
 			result, err := validator.Validate(tt.password, "", "")
-			
+
 			if tt.wantErr {
 				assert.False(t, result.IsValid)
 				assert.Contains(t, strings.Join(result.Errors, " "), tt.errMsg)
@@ -306,7 +306,7 @@ func TestPasswordValidator_ProhibitUserInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			validator := NewPasswordValidator(tt.policy)
 			result, err := validator.Validate(tt.password, tt.username, tt.email)
-			
+
 			if tt.wantErr {
 				assert.False(t, result.IsValid)
 				assert.Contains(t, strings.Join(result.Errors, " "), tt.errMsg)
@@ -362,7 +362,7 @@ func TestPasswordValidator_ProhibitCommonWords(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			validator := NewPasswordValidator(tt.policy)
 			result, err := validator.Validate(tt.password, "", "")
-			
+
 			if tt.wantErr {
 				assert.False(t, result.IsValid)
 				assert.Contains(t, strings.Join(result.Errors, " "), tt.errMsg)
@@ -406,9 +406,9 @@ func TestPasswordEntropy_Calculate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			calculator := NewEntropyCalculator()
 			entropy := calculator.Calculate(tt.password)
-			
+
 			assert.Greater(t, entropy, 0.0)
-			
+
 			if tt.shouldPassCheck {
 				assert.GreaterOrEqual(t, entropy, tt.minEntropy)
 			} else {
@@ -455,7 +455,7 @@ func TestPasswordStrength_GetScore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			checker := NewPasswordStrengthChecker()
 			score := checker.GetScore(tt.password)
-			
+
 			assert.GreaterOrEqual(t, score, tt.minScore)
 			assert.LessOrEqual(t, score, 4)
 		})
@@ -506,7 +506,7 @@ func TestPasswordValidator_CompleteValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := validator.Validate(tt.password, tt.username, tt.email)
-			
+
 			if tt.wantErr {
 				assert.False(t, result.IsValid)
 				assert.NotEmpty(t, result.Errors)
@@ -517,7 +517,7 @@ func TestPasswordValidator_CompleteValidation(t *testing.T) {
 					assert.NotEmpty(t, result.Suggestions)
 				}
 			}
-			
+
 			assert.NotNil(t, result.Score)
 			assert.GreaterOrEqual(t, result.Score.Total, 0)
 			assert.LessOrEqual(t, result.Score.Total, 4)
@@ -530,16 +530,16 @@ func TestPasswordHasher_Argon2(t *testing.T) {
 
 	t.Run("hash and verify password", func(t *testing.T) {
 		password := "SecureP@ssw0rd123!"
-		
+
 		hash, err := hasher.Hash(password)
 		require.NoError(t, err)
 		assert.NotEmpty(t, hash)
 		assert.NotEqual(t, password, hash)
-		
+
 		valid, err := hasher.Verify(password, hash)
 		require.NoError(t, err)
 		assert.True(t, valid)
-		
+
 		invalid, err := hasher.Verify("WrongPassword", hash)
 		require.NoError(t, err)
 		assert.False(t, invalid)
@@ -547,19 +547,19 @@ func TestPasswordHasher_Argon2(t *testing.T) {
 
 	t.Run("different hashes for same password", func(t *testing.T) {
 		password := "SecureP@ssw0rd123!"
-		
+
 		hash1, err := hasher.Hash(password)
 		require.NoError(t, err)
-		
+
 		hash2, err := hasher.Hash(password)
 		require.NoError(t, err)
-		
+
 		assert.NotEqual(t, hash1, hash2)
-		
+
 		valid1, err := hasher.Verify(password, hash1)
 		require.NoError(t, err)
 		assert.True(t, valid1)
-		
+
 		valid2, err := hasher.Verify(password, hash2)
 		require.NoError(t, err)
 		assert.True(t, valid2)
@@ -571,7 +571,7 @@ func TestPasswordHistory_Check(t *testing.T) {
 
 	t.Run("check password history", func(t *testing.T) {
 		hasher := NewArgon2Hasher()
-		
+
 		passwords := []string{
 			"OldPassword1!@#",
 			"OldPassword2!@#",
@@ -579,20 +579,20 @@ func TestPasswordHistory_Check(t *testing.T) {
 			"OldPassword4!@#",
 			"OldPassword5!@#",
 		}
-		
+
 		var hashes []string
 		for _, pwd := range passwords {
 			hash, err := hasher.Hash(pwd)
 			require.NoError(t, err)
 			hashes = append(hashes, hash)
 		}
-		
+
 		for i, pwd := range passwords {
 			used, err := history.IsPasswordUsed(pwd, hashes[:i+1])
 			require.NoError(t, err)
 			assert.True(t, used, "Password %s should be in history", pwd)
 		}
-		
+
 		newPassword := "NewPassword6!@#"
 		used, err := history.IsPasswordUsed(newPassword, hashes)
 		require.NoError(t, err)
@@ -603,7 +603,7 @@ func TestPasswordHistory_Check(t *testing.T) {
 func TestBreachChecker_CheckPassword(t *testing.T) {
 	t.Run("check breached passwords", func(t *testing.T) {
 		checker := NewBreachChecker()
-		
+
 		breachedPasswords := []string{
 			"password",
 			"123456",
@@ -611,12 +611,12 @@ func TestBreachChecker_CheckPassword(t *testing.T) {
 			"qwerty",
 			"admin",
 		}
-		
+
 		for _, pwd := range breachedPasswords {
 			breached := checker.IsBreached(pwd)
 			assert.True(t, breached, "Password %s should be marked as breached", pwd)
 		}
-		
+
 		safePassword := "Un1qu3P@ssw0rd!XyZ#2024"
 		breached := checker.IsBreached(safePassword)
 		assert.False(t, breached, "Safe password should not be marked as breached")

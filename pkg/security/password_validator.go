@@ -65,10 +65,10 @@ type PasswordScore struct {
 }
 
 type PasswordValidator struct {
-	policy           *PasswordPolicy
-	entropyCalc      *EntropyCalculator
-	strengthChecker  *PasswordStrengthChecker
-	breachChecker    *BreachChecker
+	policy          *PasswordPolicy
+	entropyCalc     *EntropyCalculator
+	strengthChecker *PasswordStrengthChecker
+	breachChecker   *BreachChecker
 }
 
 func NewPasswordValidator(policy *PasswordPolicy) *PasswordValidator {
@@ -225,7 +225,7 @@ func countNumbers(s string) int {
 func countSpecialChars(s string) int {
 	count := 0
 	for _, r := range s {
-		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')) {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') {
 			count++
 		}
 	}
@@ -244,7 +244,7 @@ func hasSequentialChars(s string) bool {
 		"stuv", "tuvw", "uvwx", "vwxy", "wxyz", "12345", "23456", "34567",
 		"45678", "56789", "123456", "234567", "345678", "456789",
 	}
-	
+
 	for _, seq := range sequences {
 		if strings.Contains(s, seq) {
 			return true
@@ -257,7 +257,7 @@ func hasRepeatingChars(s string, maxRepeat int) bool {
 	if maxRepeat <= 0 {
 		return false
 	}
-	
+
 	for i := 0; i < len(s); i++ {
 		count := 1
 		for j := i + 1; j < len(s) && s[j] == s[i]; j++ {
@@ -280,13 +280,13 @@ func (e *EntropyCalculator) Calculate(password string) float64 {
 	if len(password) == 0 {
 		return 0
 	}
-	
+
 	charSet := 0
 	hasLower := false
 	hasUpper := false
 	hasDigit := false
 	hasSpecial := false
-	
+
 	for _, r := range password {
 		if r >= 'a' && r <= 'z' && !hasLower {
 			charSet += 26
@@ -300,16 +300,16 @@ func (e *EntropyCalculator) Calculate(password string) float64 {
 			charSet += 10
 			hasDigit = true
 		}
-		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')) && !hasSpecial {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && !hasSpecial {
 			charSet += 32
 			hasSpecial = true
 		}
 	}
-	
+
 	if charSet == 0 {
 		return 0
 	}
-	
+
 	return float64(len(password)) * math.Log2(float64(charSet))
 }
 
@@ -321,26 +321,26 @@ func NewPasswordStrengthChecker() *PasswordStrengthChecker {
 
 func (p *PasswordStrengthChecker) GetScore(password string) int {
 	score := 0
-	
+
 	if len(password) >= 8 {
 		score++
 	}
 	if len(password) >= 12 {
 		score++
 	}
-	
+
 	if countLowercase(password) > 0 && countUppercase(password) > 0 {
 		score++
 	}
-	
+
 	if countNumbers(password) > 0 && countSpecialChars(password) > 0 {
 		score++
 	}
-	
+
 	if score > 4 {
 		score = 4
 	}
-	
+
 	return score
 }
 
@@ -350,22 +350,22 @@ type BreachChecker struct {
 
 func NewBreachChecker() *BreachChecker {
 	commonPasswords := map[string]bool{
-		"password":     true,
-		"password1":    true,
-		"password123":  true,
-		"123456":       true,
-		"12345678":     true,
-		"qwerty":       true,
-		"qwerty123":    true,
-		"admin":        true,
-		"letmein":      true,
-		"welcome":      true,
-		"monkey":       true,
-		"dragon":       true,
-		"master":       true,
-		"1234567890":   true,
+		"password":    true,
+		"password1":   true,
+		"password123": true,
+		"123456":      true,
+		"12345678":    true,
+		"qwerty":      true,
+		"qwerty123":   true,
+		"admin":       true,
+		"letmein":     true,
+		"welcome":     true,
+		"monkey":      true,
+		"dragon":      true,
+		"master":      true,
+		"1234567890":  true,
 	}
-	
+
 	return &BreachChecker{
 		commonPasswords: commonPasswords,
 	}
@@ -373,17 +373,17 @@ func NewBreachChecker() *BreachChecker {
 
 func (b *BreachChecker) IsBreached(password string) bool {
 	lowerPassword := strings.ToLower(password)
-	
+
 	if b.commonPasswords[lowerPassword] {
 		return true
 	}
-	
+
 	for common := range b.commonPasswords {
 		if strings.Contains(lowerPassword, common) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -408,15 +408,15 @@ func (h *Argon2Hasher) Hash(password string) (string, error) {
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
-	
+
 	hash := argon2.IDKey([]byte(password), salt, h.time, h.memory, h.threads, h.keyLen)
-	
+
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
-	
+
 	encoded := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
 		argon2.Version, h.memory, h.time, h.threads, b64Salt, b64Hash)
-	
+
 	return encoded, nil
 }
 
@@ -425,32 +425,32 @@ func (h *Argon2Hasher) Verify(password, encodedHash string) (bool, error) {
 	if len(parts) != 6 {
 		return false, fmt.Errorf("invalid hash format")
 	}
-	
+
 	var version int
 	_, err := fmt.Sscanf(parts[2], "v=%d", &version)
 	if err != nil {
 		return false, err
 	}
-	
+
 	var memory, time uint32
 	var threads uint8
 	_, err = fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &time, &threads)
 	if err != nil {
 		return false, err
 	}
-	
+
 	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
 		return false, err
 	}
-	
+
 	hash, err := base64.RawStdEncoding.DecodeString(parts[5])
 	if err != nil {
 		return false, err
 	}
-	
+
 	hash2 := argon2.IDKey([]byte(password), salt, time, memory, threads, uint32(len(hash)))
-	
+
 	return subtle.ConstantTimeCompare(hash, hash2) == 1, nil
 }
 
@@ -466,7 +466,7 @@ func NewPasswordHistory(maxCount int) *PasswordHistory {
 
 func (ph *PasswordHistory) IsPasswordUsed(password string, previousHashes []string) (bool, error) {
 	hasher := NewArgon2Hasher()
-	
+
 	for _, hash := range previousHashes {
 		match, err := hasher.Verify(password, hash)
 		if err != nil {
@@ -476,6 +476,6 @@ func (ph *PasswordHistory) IsPasswordUsed(password string, previousHashes []stri
 			return true, nil
 		}
 	}
-	
+
 	return false, nil
 }
