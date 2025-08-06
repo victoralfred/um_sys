@@ -299,6 +299,16 @@ func TestJobService(t *testing.T) {
 	t.Run("Job timeout handling", func(t *testing.T) {
 		service := NewJobService()
 
+		// Set retry strategy that doesn't retry timeouts
+		service.SetRetryStrategy(&job.LinearRetryStrategy{
+			MaxRetries: 3,
+			Delay:      1 * time.Second,
+			RetryableError: func(err error) bool {
+				// Don't retry context errors (timeouts/cancellations)
+				return !errors.Is(err, context.DeadlineExceeded) && !errors.Is(err, context.Canceled)
+			},
+		})
+
 		// Register handler with short timeout
 		handler := &job.JobHandlerFunc{
 			TypeName: "timeout_test",

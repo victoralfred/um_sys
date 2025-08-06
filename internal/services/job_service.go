@@ -141,10 +141,13 @@ func (s *JobService) ProcessNextJob(ctx context.Context, jobType string) error {
 	// Check for jobs that are ready to be processed (retry delay)
 	var jobToProcess *job.BackgroundJob
 	now := time.Now()
+	checkedJobs := 0
+	totalJobs := queue.Len()
 
-	for queue.Len() > 0 {
+	for checkedJobs < totalJobs && queue.Len() > 0 {
 		item := heap.Pop(queue).(*PriorityQueueItem)
 		j := item.Job
+		checkedJobs++
 
 		// Check if job is scheduled for future
 		if j.ScheduledFor != nil && j.ScheduledFor.After(now) {
@@ -202,6 +205,9 @@ func (s *JobService) ProcessNextJob(ctx context.Context, jobType string) error {
 	defer s.mu.Unlock()
 
 	if err != nil {
+		// Store the original error for retry strategy
+		originalErr := err
+
 		// Check if it's a timeout
 		if errors.Is(err, context.DeadlineExceeded) {
 			err = fmt.Errorf("job timeout after %v", timeout)
@@ -211,8 +217,8 @@ func (s *JobService) ProcessNextJob(ctx context.Context, jobType string) error {
 		jobToProcess.LastError = err.Error()
 		jobToProcess.FailedAt = &now
 
-		// Check if should retry
-		if s.retryStrategy != nil && s.retryStrategy.ShouldRetry(jobToProcess, err) {
+		// Check if should retry (use original error for strategy)
+		if s.retryStrategy != nil && s.retryStrategy.ShouldRetry(jobToProcess, originalErr) {
 			jobToProcess.RetryCount++
 			jobToProcess.Status = job.JobStatusRetrying
 			nextRetry := s.retryStrategy.NextRetryTime(jobToProcess)
