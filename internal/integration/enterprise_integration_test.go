@@ -184,7 +184,7 @@ func TestEnterpriseIntegration(t *testing.T) {
 		queryCache := cache.NewQueryCache(getTestRedisClient())
 		optimizer := cache.NewQueryOptimizer(nil, queryCache)
 
-		// Simulate query pattern
+		// Simulate query pattern - first populate cache
 		for i := 0; i < 100; i++ {
 			query := fmt.Sprintf("SELECT * FROM users WHERE id = %d", i)
 			opt := optimizer.Optimize(query, nil)
@@ -206,6 +206,15 @@ func TestEnterpriseIntegration(t *testing.T) {
 				result := map[string]interface{}{"id": i, "name": fmt.Sprintf("User%d", i)}
 				_ = queryCache.Set(ctx, opt.CacheKey, result, opt.CacheTTL)
 			}
+		}
+
+		// Now simulate cache reads to generate stats
+		for i := 0; i < 50; i++ {
+			query := fmt.Sprintf("SELECT * FROM users WHERE id = %d", i)
+			opt := optimizer.Optimize(query, nil)
+			
+			var result map[string]interface{}
+			_ = queryCache.Get(ctx, opt.CacheKey, &result)
 		}
 
 		// Verify coordination

@@ -50,6 +50,7 @@ type Fields map[string]interface{}
 // StructuredLogger implements structured logging
 type StructuredLogger struct {
 	config     *LogConfig
+	configFile string // Track config file path for reload
 	writer     io.Writer
 	level      LogLevel
 	piiFields  map[string]bool
@@ -59,6 +60,7 @@ type StructuredLogger struct {
 	mu         sync.RWMutex
 	rotator    *lumberjack.Logger
 	lastRotate time.Time
+	lastSize   int64 // Track file size for rotation detection
 	batch      []*logMessage
 	batchMu    sync.Mutex
 	batchTimer *time.Timer
@@ -111,9 +113,14 @@ func NewStructuredLogger(config *LogConfig) (*StructuredLogger, error) {
 	}
 
 	// Set default sample rate if not specified
-	if config.SampleRate == 0 {
+	// We use a convention: uninitialized SampleRate is 0, but we need to distinguish
+	// between "not set" (should default to 1.0) and "explicitly set to 0.0"
+	// Check other config fields to infer if this is a default struct
+	if config.SampleRate == 0 && config.Format == "" && config.Output == "" {
+		// This looks like a default/uninitialized config, set default
 		config.SampleRate = 1.0
 	}
+	// If other fields are set but SampleRate is 0, assume it was explicitly set to 0
 
 	// Parse log level
 	logger.level = parseLevel(config.Level)
@@ -159,7 +166,14 @@ func NewStructuredLoggerFromFile(configFile string) (*StructuredLogger, error) {
 		return nil, err
 	}
 
-	return NewStructuredLogger(&config)
+	logger, err := NewStructuredLogger(&config)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Store config file path for reload
+	logger.configFile = configFile
+	return logger, nil
 }
 
 func (l *StructuredLogger) setupWriter() error {
@@ -230,10 +244,16 @@ func (l *StructuredLogger) Error(ctx context.Context, message string, err error)
 	l.log(ctx, "error", message, nil, err)
 }
 
+// ErrorWithFields logs error message with fields
+func (l *StructuredLogger) ErrorWithFields(ctx context.Context, message string, fields Fields, err error) {
+	atomic.AddInt64(&l.metrics.ErrorCount, 1)
+	l.log(ctx, "error", message, fields, err)
+}
+
 func (l *StructuredLogger) log(ctx context.Context, level string, message string, fields Fields, err error) {
-	// Sampling (except errors)
+	// Sampling (except errors) - when SampleRate is 0.0, only log errors
 	if level != "error" && l.config.SampleRate < 1.0 {
-		if rand.Float64() > l.config.SampleRate {
+		if l.config.SampleRate == 0.0 || rand.Float64() > l.config.SampleRate {
 			atomic.AddInt64(&l.stats.Sampled, 1)
 			return
 		}
@@ -383,11 +403,25 @@ func (l *StructuredLogger) startBatchTimer() {
 }
 
 func (l *StructuredLogger) checkRotation() {
+	// Time-based rotation
 	if l.config.RotateInterval > 0 && time.Since(l.lastRotate) > l.config.RotateInterval {
 		if l.rotator != nil {
 			_ = l.rotator.Rotate()
 			atomic.AddInt64(&l.stats.Rotations, 1)
 			l.lastRotate = time.Now()
+		}
+	}
+	
+	// Size-based rotation detection (lumberjack rotates automatically)
+	if l.rotator != nil && l.config.MaxSize > 0 {
+		// Check if file size decreased (indicating rotation)
+		if info, err := os.Stat(l.config.FilePath); err == nil {
+			currentSize := info.Size()
+			if l.lastSize > 0 && currentSize < l.lastSize {
+				// File size decreased, rotation likely occurred
+				atomic.AddInt64(&l.stats.Rotations, 1)
+			}
+			l.lastSize = currentSize
 		}
 	}
 }
@@ -442,10 +476,36 @@ func (l *StructuredLogger) GetConfig() *LogConfig {
 	return l.config
 }
 
-// ReloadConfig reloads configuration
+// ReloadConfig reloads configuration from file
 func (l *StructuredLogger) ReloadConfig() error {
-	// This would typically re-read from file
-	// For now, just return nil
+	if l.configFile == "" {
+		return fmt.Errorf("no config file specified for reload")
+	}
+	
+	// Read updated config
+	data, err := os.ReadFile(l.configFile)
+	if err != nil {
+		return err
+	}
+
+	var newConfig LogConfig
+	if err := json.Unmarshal(data, &newConfig); err != nil {
+		return err
+	}
+	
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	
+	// Update config
+	l.config = &newConfig
+	l.level = parseLevel(newConfig.Level)
+	
+	// Update PII fields
+	l.piiFields = make(map[string]bool)
+	for _, field := range newConfig.PIIFields {
+		l.piiFields[field] = true
+	}
+	
 	return nil
 }
 
@@ -485,7 +545,7 @@ func HTTPLoggingMiddleware(logger *StructuredLogger) gin.HandlerFunc {
 		message := "HTTP Request"
 
 		if status >= 500 {
-			logger.Error(ctx, message, fmt.Errorf("status %d", status))
+			logger.ErrorWithFields(ctx, message, fields, fmt.Errorf("status %d", status))
 		} else if logger.config.SlowRequestThreshold > 0 && latency > logger.config.SlowRequestThreshold {
 			message = "Slow HTTP Request"
 			logger.Warn(ctx, message, fields)

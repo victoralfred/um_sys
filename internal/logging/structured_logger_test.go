@@ -37,10 +37,11 @@ func TestStructuredLogger(t *testing.T) {
 	t.Run("Log with different levels", func(t *testing.T) {
 		var buf bytes.Buffer
 		config := &LogConfig{
-			Level:  "debug",
-			Format: "json",
-			Output: "buffer",
-			Buffer: &buf,
+			Level:      "debug",
+			Format:     "json",
+			Output:     "buffer",
+			Buffer:     &buf,
+			SampleRate: 1.0, // Log everything
 		}
 
 		logger, err := NewStructuredLogger(config)
@@ -89,12 +90,13 @@ func TestStructuredLogger(t *testing.T) {
 	t.Run("PII masking", func(t *testing.T) {
 		var buf bytes.Buffer
 		config := &LogConfig{
-			Level:     "info",
-			Format:    "json",
-			Output:    "buffer",
-			Buffer:    &buf,
-			MaskPII:   true,
-			PIIFields: []string{"email", "ssn", "credit_card", "password"},
+			Level:      "info",
+			Format:     "json",
+			Output:     "buffer",
+			Buffer:     &buf,
+			MaskPII:    true,
+			PIIFields:  []string{"email", "ssn", "credit_card", "password"},
+			SampleRate: 1.0, // Log everything
 		}
 
 		logger, _ := NewStructuredLogger(config)
@@ -182,6 +184,7 @@ func TestStructuredLogger(t *testing.T) {
 			Output:     "buffer",
 			Async:      true,
 			BufferSize: 100,
+			SampleRate: 1.0, // Log everything
 		}
 
 		logger, _ := NewStructuredLogger(config)
@@ -232,7 +235,7 @@ func TestLoggingMiddleware(t *testing.T) {
 		assert.Equal(t, "HTTP Request", entry.Message)
 		assert.Equal(t, "GET", entry.Fields["method"])
 		assert.Equal(t, "/test", entry.Fields["path"])
-		assert.Equal(t, 200, entry.Fields["status"])
+		assert.Equal(t, float64(200), entry.Fields["status"])
 		assert.NotNil(t, entry.Fields["latency"])
 		assert.Equal(t, "test-agent", entry.Fields["user_agent"])
 		assert.Equal(t, "req-123", entry.Fields["request_id"])
@@ -260,7 +263,7 @@ func TestLoggingMiddleware(t *testing.T) {
 		_ = json.Unmarshal([]byte(logs[len(logs)-1]), &entry)
 
 		assert.Equal(t, "error", entry.Level)
-		assert.Equal(t, 500, entry.Fields["status"])
+		assert.Equal(t, float64(500), entry.Fields["status"])
 	})
 
 	t.Run("Slow request logging", func(t *testing.T) {
@@ -271,6 +274,7 @@ func TestLoggingMiddleware(t *testing.T) {
 			Output:               "buffer",
 			Buffer:               &buf,
 			SlowRequestThreshold: 100 * time.Millisecond,
+			SampleRate:           1.0, // Log everything
 		}
 		logger, _ := NewStructuredLogger(config)
 
@@ -308,6 +312,7 @@ func TestLogRotation(t *testing.T) {
 			MaxSize:    1, // 1 MB
 			MaxBackups: 3,
 			MaxAge:     7,
+			SampleRate: 1.0, // Log everything
 		}
 
 		logger, err := NewStructuredLogger(config)
@@ -331,6 +336,7 @@ func TestLogRotation(t *testing.T) {
 			Output:         "file",
 			FilePath:       "/tmp/test-time.log",
 			RotateInterval: 1 * time.Second,
+			SampleRate:     1.0, // Log everything
 		}
 
 		logger, _ := NewStructuredLogger(config)
@@ -356,6 +362,7 @@ func TestOpenTelemetryIntegration(t *testing.T) {
 			Buffer:          &buf,
 			EnableTracing:   true,
 			TracingEndpoint: "localhost:4317",
+			SampleRate:      1.0, // Log everything
 		}
 
 		logger, _ := NewStructuredLogger(config)
@@ -380,6 +387,7 @@ func TestOpenTelemetryIntegration(t *testing.T) {
 			Format:          "json",
 			EnableMetrics:   true,
 			MetricsEndpoint: "localhost:8125",
+			SampleRate:      1.0, // Log everything
 		}
 
 		logger, _ := NewStructuredLogger(config)
@@ -449,10 +457,11 @@ func TestLoggerConfiguration(t *testing.T) {
 	t.Run("Dynamic level change", func(t *testing.T) {
 		var buf bytes.Buffer
 		config := &LogConfig{
-			Level:  "info",
-			Format: "json",
-			Output: "buffer",
-			Buffer: &buf,
+			Level:      "info",
+			Format:     "json",
+			Output:     "buffer",
+			Buffer:     &buf,
+			SampleRate: 1.0, // Log everything
 		}
 
 		logger, _ := NewStructuredLogger(config)
@@ -508,10 +517,11 @@ func TestLoggerConfiguration(t *testing.T) {
 // Helper functions
 func createTestLogger(buf *bytes.Buffer) *StructuredLogger {
 	config := &LogConfig{
-		Level:  "debug",
-		Format: "json",
-		Output: "buffer",
-		Buffer: buf,
+		Level:      "debug",
+		Format:     "json",
+		Output:     "buffer",
+		Buffer:     buf,
+		SampleRate: 1.0, // Log everything
 	}
 	logger, _ := NewStructuredLogger(config)
 	return logger
