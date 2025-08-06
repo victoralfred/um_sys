@@ -55,8 +55,8 @@ func (h *SoftDeleteCleanupHandler) GetTimeout() time.Duration {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	if h.config != nil && h.config.JobConfiguration.Strategy.Timeout > 0 {
-		return h.config.JobConfiguration.Strategy.Timeout
+	if h.config != nil && h.config.Strategy.Timeout > 0 {
+		return h.config.Strategy.Timeout
 	}
 	return 5 * time.Minute // Default timeout
 }
@@ -94,7 +94,7 @@ func (h *SoftDeleteCleanupHandler) Handle(ctx context.Context, j job.Job) error 
 	cutoffTime := time.Now().Add(-h.config.RetentionPeriod)
 
 	// Process entities based on target
-	entities := []string{}
+	var entities []string
 	switch h.config.TargetEntity {
 	case "all":
 		entities = []string{"user", "configuration"}
@@ -184,13 +184,13 @@ func (h *SoftDeleteCleanupHandler) GetStatistics() (*job.SoftDeleteStats, error)
 
 	// Calculate next scheduled time
 	if h.config != nil {
-		switch h.config.JobConfiguration.Schedule.Type {
+		switch h.config.Schedule.Type {
 		case job.ScheduleTypeDaily:
 			h.stats.NextScheduled = h.stats.LastRun.Add(24 * time.Hour)
 		case job.ScheduleTypeWeekly:
 			h.stats.NextScheduled = h.stats.LastRun.Add(7 * 24 * time.Hour)
 		case job.ScheduleTypeInterval:
-			h.stats.NextScheduled = h.stats.LastRun.Add(h.config.JobConfiguration.Schedule.Interval)
+			h.stats.NextScheduled = h.stats.LastRun.Add(h.config.Schedule.Interval)
 		}
 	}
 

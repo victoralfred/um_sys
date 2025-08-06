@@ -340,12 +340,12 @@ func (r *EventTypeRegistry) validateFieldType(field FieldDefinition, value inter
 			return errors.New("expected number")
 		}
 	case "integer":
-		switch value.(type) {
+		switch v := value.(type) {
 		case int, int64, int32, int16, int8:
 			// Valid integer types
 		case float64:
 			// Check if it's a whole number
-			if val := value.(float64); val != float64(int64(val)) {
+			if v != float64(int64(v)) {
 				return errors.New("expected integer")
 			}
 		default:

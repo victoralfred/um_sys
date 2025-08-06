@@ -246,7 +246,7 @@ func TestAnalyticsIntegration(t *testing.T) {
 		assert.NotNil(t, retention)
 
 		// Verify retention decreases over time
-		var prevRate float64 = 100.0
+		prevRate := 100.0
 		for _, interval := range retention.Intervals {
 			assert.LessOrEqual(t, interval.RetentionRate, prevRate)
 			prevRate = interval.RetentionRate

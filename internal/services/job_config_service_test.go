@@ -353,7 +353,7 @@ func TestSoftDeleteCleanupHandler(t *testing.T) {
 			BatchSize:       50,
 			DryRun:          false,
 		}
-		handler.SetConfiguration(config)
+		_ = handler.SetConfiguration(config)
 
 		// Register handler
 		err := jobService.RegisterHandler("soft_delete_cleanup", handler)
@@ -392,7 +392,7 @@ func TestSoftDeleteCleanupHandler(t *testing.T) {
 			DryRun:          true, // Dry run mode
 		}
 
-		handler.SetConfiguration(config)
+		_ = handler.SetConfiguration(config)
 
 		// Set test data
 		testConfigs := []interface{}{

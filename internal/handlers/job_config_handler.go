@@ -243,7 +243,7 @@ func (h *JobConfigHandler) EnableConfiguration(c *gin.Context) {
 	}
 
 	// Schedule the job if enabled
-	h.configService.ScheduleConfiguredJob(id)
+	_ = h.configService.ScheduleConfiguredJob(id)
 
 	config, _ := h.configService.GetConfiguration(id)
 	c.JSON(http.StatusOK, config)
