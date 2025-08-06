@@ -8,17 +8,17 @@ import (
 )
 
 type FlagRepository interface {
-	Create(ctx context.Context, flag *Flag) error
+	Create(ctx context.Context, flag *FeatureFlag) error
 
-	GetByID(ctx context.Context, id uuid.UUID) (*Flag, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error)
 
-	GetByKey(ctx context.Context, key string) (*Flag, error)
+	GetByKey(ctx context.Context, key string) (*FeatureFlag, error)
 
-	List(ctx context.Context, limit, offset int) ([]*Flag, int64, error)
+	List(ctx context.Context, limit, offset int) ([]*FeatureFlag, int64, error)
 
-	ListByTags(ctx context.Context, tags []string) ([]*Flag, error)
+	ListByTags(ctx context.Context, tags []string) ([]*FeatureFlag, error)
 
-	Update(ctx context.Context, flag *Flag) error
+	Update(ctx context.Context, flag *FeatureFlag) error
 
 	Delete(ctx context.Context, id uuid.UUID) error
 
@@ -26,13 +26,13 @@ type FlagRepository interface {
 }
 
 type RuleRepository interface {
-	CreateRule(ctx context.Context, flagID uuid.UUID, rule *Rule) error
+	CreateRule(ctx context.Context, flagID uuid.UUID, rule *TargetingRule) error
 
-	GetRuleByID(ctx context.Context, id uuid.UUID) (*Rule, error)
+	GetRuleByID(ctx context.Context, id uuid.UUID) (*TargetingRule, error)
 
-	ListRulesByFlag(ctx context.Context, flagID uuid.UUID) ([]Rule, error)
+	ListRulesByFlag(ctx context.Context, flagID uuid.UUID) ([]TargetingRule, error)
 
-	UpdateRule(ctx context.Context, rule *Rule) error
+	UpdateRule(ctx context.Context, rule *TargetingRule) error
 
 	DeleteRule(ctx context.Context, id uuid.UUID) error
 
@@ -57,46 +57,28 @@ type OverrideRepository interface {
 	DeleteExpired(ctx context.Context) (int64, error)
 }
 
-type SegmentRepository interface {
-	Create(ctx context.Context, segment *Segment) error
-
-	GetByID(ctx context.Context, id uuid.UUID) (*Segment, error)
-
-	GetByKey(ctx context.Context, key string) (*Segment, error)
-
-	List(ctx context.Context, limit, offset int) ([]*Segment, int64, error)
-
-	Update(ctx context.Context, segment *Segment) error
-
-	Delete(ctx context.Context, id uuid.UUID) error
-
-	IsUserInSegment(ctx context.Context, segmentID, userID uuid.UUID) (bool, error)
-}
+// SegmentRepository handles user segments (to be implemented)
+// type SegmentRepository interface {
+// }
 
 type EventRepository interface {
-	Record(ctx context.Context, event *Event) error
+	Record(ctx context.Context, event *FlagEvent) error
 
-	GetEvents(ctx context.Context, flagKey string, from, to time.Time) ([]*Event, error)
+	GetEvents(ctx context.Context, flagKey string, from, to time.Time) ([]*FlagEvent, error)
 
-	GetAnalytics(ctx context.Context, flagKey string, from, to time.Time) (*Analytics, error)
+	GetStats(ctx context.Context, flagKey string, from, to time.Time) (*FlagStats, error)
 
-	GetUserEvents(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*Event, int64, error)
+	GetUserEvents(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*FlagEvent, int64, error)
 
 	DeleteOldEvents(ctx context.Context, before time.Time) (int64, error)
 }
 
-type ChangeLogRepository interface {
-	Record(ctx context.Context, change *ChangeLog) error
-
-	GetByFlag(ctx context.Context, flagID uuid.UUID, limit, offset int) ([]*ChangeLog, int64, error)
-
-	GetByUser(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*ChangeLog, int64, error)
-
-	GetRecent(ctx context.Context, limit int) ([]*ChangeLog, error)
-}
+// ChangeLogRepository handles change logs (to be implemented)
+// type ChangeLogRepository interface {
+// }
 
 type FeatureService interface {
-	CreateFlag(ctx context.Context, req *CreateFlagRequest, createdBy uuid.UUID) (*Flag, error)
+	CreateFlag(ctx context.Context, flag *FeatureFlag, createdBy uuid.UUID) (*FeatureFlag, error)
 
 	UpdateFlag(ctx context.Context, id uuid.UUID, req *UpdateFlagRequest, updatedBy uuid.UUID) (*Flag, error)
 
@@ -158,7 +140,7 @@ type CacheService interface {
 type EvaluationEngine interface {
 	Evaluate(flag *Flag, context Context) (*Evaluation, error)
 
-	EvaluateRule(rule Rule, context Context) (bool, error)
+	EvaluateRule(rule TargetingRule, context Context) (bool, error)
 
 	EvaluateCondition(condition Condition, context Context) (bool, error)
 

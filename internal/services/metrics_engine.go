@@ -303,7 +303,7 @@ func (e *MetricsEngine) Schedule(metricName string, schedule CronSchedule) error
 			StartTime: time.Now().Add(-24 * time.Hour),
 			EndTime:   time.Now(),
 		}
-		e.Calculate(ctx, metricName, params)
+		_, _ = e.Calculate(ctx, metricName, params)
 	})
 
 	if err != nil {

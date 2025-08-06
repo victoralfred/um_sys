@@ -626,7 +626,7 @@ func (s *CohortService) exportAsCSV(cohortID uuid.UUID, members []CohortMember) 
 
 	// Write header
 	header := []string{"user_id", "joined_date", "score", "segment"}
-	writer.Write(header)
+	_ = writer.Write(header)
 
 	// Write member data
 	for _, member := range members {
@@ -636,7 +636,7 @@ func (s *CohortService) exportAsCSV(cohortID uuid.UUID, members []CohortMember) 
 			fmt.Sprintf("%.2f", member.Score),
 			fmt.Sprintf("%v", member.Attributes["segment"]),
 		}
-		writer.Write(row)
+		_ = writer.Write(row)
 	}
 
 	writer.Flush()
