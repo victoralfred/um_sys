@@ -75,7 +75,7 @@ func (h *DocsHandler) GetSwaggerUI(c *gin.Context) {
     <script>
         window.onload = function() {
             SwaggerUIBundle({
-                url: '/docs/swagger.json',
+                url: '/v1/docs/swagger.json',
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [
@@ -126,7 +126,7 @@ func (h *DocsHandler) GetRedocUI(c *gin.Context) {
         <h1>UManager API Documentation</h1>
         <p>Interactive API documentation powered by Redoc</p>
     </div>
-    <redoc spec-url='/docs/swagger.json'></redoc>
+    <redoc spec-url='/v1/docs/swagger.json'></redoc>
 </body>
 </html>`
 
@@ -187,19 +187,19 @@ func (h *DocsHandler) GetDocsIndex(c *gin.Context) {
         <div class="card">
             <h2>Swagger UI</h2>
             <p>Interactive API documentation with try-it-out functionality. Perfect for testing endpoints directly from the browser.</p>
-            <a href="/docs" class="btn">Open Swagger UI</a>
+            <a href="/v1/docs" class="btn">Open Swagger UI</a>
         </div>
         
         <div class="card">
             <h2>ReDoc</h2>
             <p>Clean, responsive documentation with a three-panel design. Great for reading and understanding the API structure.</p>
-            <a href="/docs/redoc" class="btn">Open ReDoc</a>
+            <a href="/v1/docs/redoc" class="btn">Open ReDoc</a>
         </div>
         
         <div class="card">
             <h2>OpenAPI Specification</h2>
             <p>Raw OpenAPI 3.0 specification in JSON format. Use this for generating client SDKs or importing into other tools.</p>
-            <a href="/docs/swagger.json" class="btn secondary">Download JSON</a>
+            <a href="/v1/docs/swagger.json" class="btn secondary">Download JSON</a>
         </div>
     </div>
 </body>
