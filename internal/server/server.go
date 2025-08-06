@@ -45,6 +45,7 @@ type Services struct {
 
 	// Handlers
 	AuthHandler *handlers.AuthHandler
+	DocsHandler *handlers.DocsHandler
 }
 
 // New creates a new server instance - Factory pattern
@@ -114,6 +115,15 @@ func (s *HTTPServer) setupPublicRoutes(rg *gin.RouterGroup) {
 	// Health check
 	rg.GET("/health", s.healthCheck)
 	rg.GET("/info", s.apiInfo)
+
+	// API Documentation
+	if s.services.DocsHandler != nil {
+		// Documentation endpoints
+		rg.GET("/docs/swagger.json", s.services.DocsHandler.GetSwaggerJSON)
+		rg.GET("/docs", s.services.DocsHandler.GetSwaggerUI)
+		rg.GET("/docs/redoc", s.services.DocsHandler.GetRedocUI)
+		rg.GET("/docs/", s.services.DocsHandler.GetDocsIndex)
+	}
 
 	// Auth endpoints
 	auth := rg.Group("/auth")
