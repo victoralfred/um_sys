@@ -44,6 +44,7 @@ func TestFeatureFlag(t *testing.T) {
 				{
 					ID:       uuid.New(),
 					Priority: 1,
+					Enabled:  true,
 					Conditions: []Condition{
 						{
 							Property: "subscription",
@@ -241,6 +242,7 @@ func TestFeatureFlag(t *testing.T) {
 			Rules: []TargetingRule{
 				{
 					Priority: 1,
+					Enabled:  true,
 					Conditions: []Condition{
 						{
 							Property: "usage_count",
@@ -308,6 +310,7 @@ func TestFeatureFlag(t *testing.T) {
 			Rules: []TargetingRule{
 				{
 					Priority: 1,
+					Enabled:  true,
 					Conditions: []Condition{
 						{
 							Property: "tier",

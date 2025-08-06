@@ -72,9 +72,18 @@ func (e *FeatureFlagEvaluator) Evaluate(ctx context.Context, flag *FeatureFlag, 
 	}
 
 	// Check schedule
-	if flag.Schedule != nil && !e.isInSchedule(flag.Schedule, evalContext.Timestamp) {
-		result.Reason = "outside_schedule"
-		return result
+	if flag.Schedule != nil {
+		if e.isInSchedule(flag.Schedule, evalContext.Timestamp) {
+			// If within schedule and it's a boolean flag, activate it
+			if flag.Type == FlagTypeBoolean {
+				result.Value = true
+				result.Reason = "scheduled"
+				return result
+			}
+		} else {
+			result.Reason = "outside_schedule"
+			return result
+		}
 	}
 
 	// Check dependencies
@@ -144,6 +153,10 @@ func (e *FeatureFlagEvaluator) Evaluate(ctx context.Context, flag *FeatureFlag, 
 
 // evaluateRule evaluates a targeting rule
 func (e *FeatureFlagEvaluator) evaluateRule(rule TargetingRule, context EvaluationContext) bool {
+	// If no conditions, rule doesn't match
+	if len(rule.Conditions) == 0 {
+		return false
+	}
 	// All conditions must match (AND logic)
 	for _, condition := range rule.Conditions {
 		if !e.evaluateCondition(condition, context) {
