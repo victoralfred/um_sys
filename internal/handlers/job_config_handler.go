@@ -26,23 +26,23 @@ func NewJobConfigHandler(configService *services.JobConfigurationService, jobSer
 
 // CreateJobConfigRequest represents a request to create a job configuration
 type CreateJobConfigRequest struct {
-	Name        string                    `json:"name" binding:"required"`
-	Type        string                    `json:"type" binding:"required"`
-	Description string                    `json:"description"`
-	Enabled     bool                      `json:"enabled"`
-	Schedule    job.JobScheduleConfig     `json:"schedule"`
-	Strategy    job.JobStrategyConfig     `json:"strategy"`
-	Parameters  map[string]interface{}    `json:"parameters"`
+	Name        string                 `json:"name" binding:"required"`
+	Type        string                 `json:"type" binding:"required"`
+	Description string                 `json:"description"`
+	Enabled     bool                   `json:"enabled"`
+	Schedule    job.JobScheduleConfig  `json:"schedule"`
+	Strategy    job.JobStrategyConfig  `json:"strategy"`
+	Parameters  map[string]interface{} `json:"parameters"`
 }
 
 // UpdateJobConfigRequest represents a request to update a job configuration
 type UpdateJobConfigRequest struct {
-	Name        *string                   `json:"name,omitempty"`
-	Description *string                   `json:"description,omitempty"`
-	Enabled     *bool                     `json:"enabled,omitempty"`
-	Schedule    *job.JobScheduleConfig    `json:"schedule,omitempty"`
-	Strategy    *job.JobStrategyConfig    `json:"strategy,omitempty"`
-	Parameters  map[string]interface{}    `json:"parameters,omitempty"`
+	Name        *string                `json:"name,omitempty"`
+	Description *string                `json:"description,omitempty"`
+	Enabled     *bool                  `json:"enabled,omitempty"`
+	Schedule    *job.JobScheduleConfig `json:"schedule,omitempty"`
+	Strategy    *job.JobStrategyConfig `json:"strategy,omitempty"`
+	Parameters  map[string]interface{} `json:"parameters,omitempty"`
 }
 
 // CreateConfiguration creates a new job configuration
@@ -204,7 +204,7 @@ func (h *JobConfigHandler) DeleteConfiguration(c *gin.Context) {
 // @Router /api/v1/jobs/configurations [get]
 func (h *JobConfigHandler) ListConfigurations(c *gin.Context) {
 	filters := make(map[string]interface{})
-	
+
 	if jobType := c.Query("type"); jobType != "" {
 		filters["type"] = jobType
 	}
@@ -350,7 +350,4 @@ func (h *JobConfigHandler) RegisterRoutes(router *gin.RouterGroup) {
 	}
 }
 
-// ErrorResponse represents an error response
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
+// Use the existing ErrorResponse from auth_handler.go

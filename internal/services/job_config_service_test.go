@@ -301,7 +301,7 @@ func TestSoftDeleteCleanupHandler(t *testing.T) {
 
 	t.Run("Get soft deleted items", func(t *testing.T) {
 		handler := NewSoftDeleteCleanupHandler()
-		
+
 		// Setup test data - simulate soft deleted users
 		testUsers := []interface{}{
 			map[string]interface{}{
@@ -434,15 +434,15 @@ func TestSoftDeleteCleanupHandler(t *testing.T) {
 
 		// Should handle users, configurations, and other entities
 		cutoffTime := time.Now().Add(-30 * 24 * time.Hour)
-		
+
 		// Get deleted users
 		users, err := handler.GetDeletedItems("user", cutoffTime, 50)
 		assert.NoError(t, err)
-		
+
 		// Get deleted configurations
 		configs, err := handler.GetDeletedItems("configuration", cutoffTime, 50)
 		assert.NoError(t, err)
-		
+
 		// Both should work when entity is "all"
 		assert.NotNil(t, users)
 		assert.NotNil(t, configs)

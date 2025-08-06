@@ -13,9 +13,9 @@ import (
 
 // JobConfigurationService manages job configurations
 type JobConfigurationService struct {
-	mu            sync.RWMutex
+	mu             sync.RWMutex
 	configurations map[uuid.UUID]*job.JobConfiguration
-	jobService    *JobService
+	jobService     *JobService
 }
 
 // NewJobConfigurationService creates a new job configuration service
@@ -228,7 +228,7 @@ func (s *JobConfigurationService) ScheduleConfiguredJob(configID uuid.UUID) erro
 
 	// Create job based on configuration
 	ctx := context.Background()
-	
+
 	// Determine next run time based on schedule
 	var runAt time.Time
 	switch config.Schedule.Type {
@@ -239,7 +239,7 @@ func (s *JobConfigurationService) ScheduleConfiguredJob(configID uuid.UUID) erro
 	case job.ScheduleTypeDaily:
 		// Schedule for next occurrence at specified time
 		now := time.Now()
-		runAt = time.Date(now.Year(), now.Month(), now.Day()+1, 
+		runAt = time.Date(now.Year(), now.Month(), now.Day()+1,
 			config.Schedule.TimeOfDay.Hour, config.Schedule.TimeOfDay.Minute, 0, 0, now.Location())
 	case job.ScheduleTypeCron:
 		// For cron, we'd need a cron parser - for now just schedule immediately

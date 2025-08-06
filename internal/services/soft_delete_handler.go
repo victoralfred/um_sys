@@ -13,11 +13,11 @@ import (
 
 // SoftDeleteCleanupHandler handles soft delete cleanup jobs
 type SoftDeleteCleanupHandler struct {
-	mu          sync.RWMutex
-	config      *job.SoftDeleteCleanupConfig
-	stats       *job.SoftDeleteStats
-	testData    []interface{} // For testing
-	isTestMode  bool
+	mu         sync.RWMutex
+	config     *job.SoftDeleteCleanupConfig
+	stats      *job.SoftDeleteStats
+	testData   []interface{} // For testing
+	isTestMode bool
 }
 
 // NewSoftDeleteCleanupHandler creates a new soft delete cleanup handler
@@ -173,7 +173,7 @@ func (h *SoftDeleteCleanupHandler) PermanentlyDelete(items []interface{}) error 
 	// In production, this would delete from database
 	// For now, just update stats
 	h.stats.TotalDeleted += int64(len(items))
-	
+
 	return nil
 }
 
