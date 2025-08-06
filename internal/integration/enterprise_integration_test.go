@@ -212,7 +212,7 @@ func TestEnterpriseIntegration(t *testing.T) {
 		for i := 0; i < 50; i++ {
 			query := fmt.Sprintf("SELECT * FROM users WHERE id = %d", i)
 			opt := optimizer.Optimize(query, nil)
-			
+
 			var result map[string]interface{}
 			_ = queryCache.Get(ctx, opt.CacheKey, &result)
 		}

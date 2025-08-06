@@ -170,7 +170,7 @@ func NewStructuredLoggerFromFile(configFile string) (*StructuredLogger, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Store config file path for reload
 	logger.configFile = configFile
 	return logger, nil
@@ -411,7 +411,7 @@ func (l *StructuredLogger) checkRotation() {
 			l.lastRotate = time.Now()
 		}
 	}
-	
+
 	// Size-based rotation detection (lumberjack rotates automatically)
 	if l.rotator != nil && l.config.MaxSize > 0 {
 		// Check if file size decreased (indicating rotation)
@@ -481,7 +481,7 @@ func (l *StructuredLogger) ReloadConfig() error {
 	if l.configFile == "" {
 		return fmt.Errorf("no config file specified for reload")
 	}
-	
+
 	// Read updated config
 	data, err := os.ReadFile(l.configFile)
 	if err != nil {
@@ -492,20 +492,20 @@ func (l *StructuredLogger) ReloadConfig() error {
 	if err := json.Unmarshal(data, &newConfig); err != nil {
 		return err
 	}
-	
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	
+
 	// Update config
 	l.config = &newConfig
 	l.level = parseLevel(newConfig.Level)
-	
+
 	// Update PII fields
 	l.piiFields = make(map[string]bool)
 	for _, field := range newConfig.PIIFields {
 		l.piiFields[field] = true
 	}
-	
+
 	return nil
 }
 
