@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -30,7 +31,10 @@ type Repository interface {
 	List(ctx context.Context, filter ListFilter) ([]*User, int64, error)
 
 	// UpdateLastLogin updates the last login timestamp
-	UpdateLastLogin(ctx context.Context, id uuid.UUID) error
+	UpdateLastLogin(ctx context.Context, id uuid.UUID, loginTime time.Time) error
+
+	// IncrementFailedLoginAttempts increments failed login attempts
+	IncrementFailedLoginAttempts(ctx context.Context, id uuid.UUID) error
 
 	// UpdateMFA updates MFA settings for a user
 	UpdateMFA(ctx context.Context, id uuid.UUID, enabled bool, secret string, backupCodes []string) error
