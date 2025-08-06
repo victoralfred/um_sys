@@ -387,20 +387,48 @@ func (r *UserRepository) List(ctx context.Context, filter user.ListFilter) ([]*u
 }
 
 // UpdateLastLogin updates the last login timestamp
-func (r *UserRepository) UpdateLastLogin(ctx context.Context, id uuid.UUID) error {
+func (r *UserRepository) UpdateLastLogin(ctx context.Context, id uuid.UUID, loginTime time.Time) error {
 	if id == uuid.Nil {
 		return user.ErrInvalidUserID
 	}
 
-	now := time.Now()
 	query := `
 		UPDATE users 
-		SET last_login_at = $2, updated_at = $2 
+		SET last_login_at = $2, updated_at = $3, failed_login_attempts = 0, locked_until = NULL
 		WHERE id = $1 AND deleted_at IS NULL`
 
-	result, err := r.db.Exec(ctx, query, id, now)
+	result, err := r.db.Exec(ctx, query, id, loginTime, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to update last login: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return user.ErrUserNotFound
+	}
+
+	return nil
+}
+
+// IncrementFailedLoginAttempts increments failed login attempts
+func (r *UserRepository) IncrementFailedLoginAttempts(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.Nil {
+		return user.ErrInvalidUserID
+	}
+
+	query := `
+		UPDATE users 
+		SET 
+			failed_login_attempts = failed_login_attempts + 1,
+			locked_until = CASE 
+				WHEN failed_login_attempts >= 4 THEN NOW() + INTERVAL '15 minutes'
+				ELSE locked_until
+			END,
+			updated_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL`
+
+	result, err := r.db.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to increment failed login attempts: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {

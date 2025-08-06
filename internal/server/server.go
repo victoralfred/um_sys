@@ -12,6 +12,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/victoralfred/um_sys/internal/config"
+	"github.com/victoralfred/um_sys/internal/handlers"
 	"github.com/victoralfred/um_sys/internal/middleware"
 	"github.com/victoralfred/um_sys/internal/services"
 	"go.uber.org/zap"
@@ -34,7 +35,6 @@ type HTTPServer struct {
 
 // Services holds all service dependencies - Dependency Inversion Principle
 type Services struct {
-	AuthService    *services.AuthService
 	UserService    *services.UserService
 	TokenService   middleware.TokenService // Using interface for middleware compatibility
 	RBACService    middleware.RBACService  // Using interface for middleware compatibility
@@ -42,6 +42,9 @@ type Services struct {
 	BillingService *services.BillingService
 	AuditService   *services.AuditService
 	FeatureService *services.FeatureService
+
+	// Handlers
+	AuthHandler *handlers.AuthHandler
 }
 
 // New creates a new server instance - Factory pattern
@@ -112,11 +115,16 @@ func (s *HTTPServer) setupPublicRoutes(rg *gin.RouterGroup) {
 	rg.GET("/health", s.healthCheck)
 	rg.GET("/info", s.apiInfo)
 
-	// Auth endpoints (will be implemented with handlers)
+	// Auth endpoints
 	auth := rg.Group("/auth")
 	{
-		auth.POST("/register", s.notImplemented)
-		auth.POST("/login", s.notImplemented)
+		if s.services.AuthHandler != nil {
+			auth.POST("/register", s.services.AuthHandler.Register)
+			auth.POST("/login", s.services.AuthHandler.Login)
+		} else {
+			auth.POST("/register", s.notImplemented)
+			auth.POST("/login", s.notImplemented)
+		}
 		auth.POST("/refresh", s.notImplemented)
 		auth.POST("/password/forgot", s.notImplemented)
 		auth.POST("/password/reset", s.notImplemented)
@@ -142,7 +150,11 @@ func (s *HTTPServer) setupProtectedRoutes(rg *gin.RouterGroup) {
 	// User endpoints
 	users := rg.Group("/users")
 	{
-		users.GET("/me", s.notImplemented)
+		if s.services.AuthHandler != nil {
+			users.GET("/me", s.services.AuthHandler.GetCurrentUser)
+		} else {
+			users.GET("/me", s.notImplemented)
+		}
 		users.PATCH("/me", s.notImplemented)
 		users.POST("/me/avatar", s.notImplemented)
 		users.POST("/me/password", s.notImplemented)
