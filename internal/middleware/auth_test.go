@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/victoralfred/um_sys/internal/services"
 )
 
 // MockTokenService for testing
@@ -16,12 +15,12 @@ type MockTokenService struct {
 	mock.Mock
 }
 
-func (m *MockTokenService) ValidateToken(token string) (*services.TokenClaims, error) {
+func (m *MockTokenService) ValidateToken(token string) (*TokenClaims, error) {
 	args := m.Called(token)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*services.TokenClaims), args.Error(1)
+	return args.Get(0).(*TokenClaims), args.Error(1)
 }
 
 func (m *MockTokenService) IsTokenBlacklisted(token string) bool {
@@ -47,7 +46,7 @@ func (m *MockRBACService) UserHasPermission(userID, permission string) (bool, er
 func TestAuth_MissingAuthHeader(t *testing.T) {
 	// Arrange
 	gin.SetMode(gin.TestMode)
-	tokenService := &services.TokenService{}
+	tokenService := NewSimpleTokenService()
 
 	router := gin.New()
 	router.Use(Auth(tokenService))
@@ -68,7 +67,7 @@ func TestAuth_MissingAuthHeader(t *testing.T) {
 func TestAuth_InvalidAuthFormat(t *testing.T) {
 	// Arrange
 	gin.SetMode(gin.TestMode)
-	tokenService := &services.TokenService{}
+	tokenService := NewSimpleTokenService()
 
 	router := gin.New()
 	router.Use(Auth(tokenService))
@@ -115,7 +114,7 @@ func TestAuth_BlacklistedToken(t *testing.T) {
 	// Arrange
 	gin.SetMode(gin.TestMode)
 	mockTokenService := new(MockTokenService)
-	claims := &services.TokenClaims{
+	claims := &TokenClaims{
 		UserID: "user123",
 		Email:  "test@example.com",
 	}
@@ -144,7 +143,7 @@ func TestAuth_ValidToken(t *testing.T) {
 	// Arrange
 	gin.SetMode(gin.TestMode)
 	mockTokenService := new(MockTokenService)
-	claims := &services.TokenClaims{
+	claims := &TokenClaims{
 		UserID:      "user123",
 		Email:       "test@example.com",
 		Roles:       []string{"user"},
@@ -180,7 +179,7 @@ func TestAuth_ValidToken(t *testing.T) {
 func TestRequireRole_NoAuthentication(t *testing.T) {
 	// Arrange
 	gin.SetMode(gin.TestMode)
-	rbacService := &services.RBACService{}
+	rbacService := NewSimpleRBACService()
 
 	router := gin.New()
 	router.Use(RequireRole("admin", rbacService))
@@ -282,7 +281,7 @@ func TestRequirePermission_NoPermission(t *testing.T) {
 func TestOptionalAuth_NoToken(t *testing.T) {
 	// Arrange
 	gin.SetMode(gin.TestMode)
-	tokenService := &services.TokenService{}
+	tokenService := NewSimpleTokenService()
 
 	router := gin.New()
 	router.Use(OptionalAuth(tokenService))
@@ -305,7 +304,7 @@ func TestOptionalAuth_ValidToken(t *testing.T) {
 	// Arrange
 	gin.SetMode(gin.TestMode)
 	mockTokenService := new(MockTokenService)
-	claims := &services.TokenClaims{
+	claims := &TokenClaims{
 		UserID: "user123",
 		Email:  "test@example.com",
 	}

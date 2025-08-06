@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/victoralfred/um_sys/internal/config"
+	"github.com/victoralfred/um_sys/internal/middleware"
 	"go.uber.org/zap"
 )
 
@@ -22,7 +22,13 @@ func TestNewServer(t *testing.T) {
 		Environment: "test",
 	}
 	logger := zap.NewNop()
-	services := &Services{}
+
+	tokenService := middleware.NewSimpleTokenService()
+	rbacService := middleware.NewSimpleRBACService()
+	services := &Services{
+		TokenService: tokenService,
+		RBACService:  rbacService,
+	}
 
 	// Act
 	server := New(cfg, services, logger)
@@ -48,7 +54,13 @@ func TestServer_Setup(t *testing.T) {
 		},
 	}
 	logger := zap.NewNop()
-	services := &Services{}
+
+	tokenService := middleware.NewSimpleTokenService()
+	rbacService := middleware.NewSimpleRBACService()
+	services := &Services{
+		TokenService: tokenService,
+		RBACService:  rbacService,
+	}
 
 	// Act
 	server := New(cfg, services, logger)
@@ -212,7 +224,7 @@ func TestServer_ProtectedRoutes_RequireAuth(t *testing.T) {
 			assert.Equal(t, http.StatusUnauthorized, w.Code, "Protected route should require authentication")
 
 			var response map[string]interface{}
-			json.Unmarshal(w.Body.Bytes(), &response)
+			_ = json.Unmarshal(w.Body.Bytes(), &response)
 			assert.False(t, response["success"].(bool))
 			assert.NotNil(t, response["error"])
 		})
@@ -318,7 +330,15 @@ func TestServer_MetricsEndpoint(t *testing.T) {
 			Global: 100,
 		},
 	}
-	server := New(cfg, &Services{}, zap.NewNop())
+
+	tokenService := middleware.NewSimpleTokenService()
+	rbacService := middleware.NewSimpleRBACService()
+	services := &Services{
+		TokenService: tokenService,
+		RBACService:  rbacService,
+	}
+
+	server := New(cfg, services, zap.NewNop())
 	server.Setup()
 
 	// Act
@@ -351,7 +371,7 @@ func TestServer_GracefulShutdown(t *testing.T) {
 
 // Helper functions
 
-func setupTestServer(t *testing.T) *Server {
+func setupTestServer(t *testing.T) *HTTPServer {
 	cfg := &config.Config{
 		Port:        8080,
 		Environment: "test",
@@ -369,26 +389,35 @@ func setupTestServer(t *testing.T) *Server {
 	}
 
 	logger := zap.NewNop()
-	services := &Services{}
+
+	// Create simple services for testing
+	tokenService := middleware.NewSimpleTokenService()
+	rbacService := middleware.NewSimpleRBACService()
+
+	services := &Services{
+		TokenService: tokenService,
+		RBACService:  rbacService,
+	}
 
 	return New(cfg, services, logger)
 }
 
-func makeAuthenticatedRequest(router *gin.Engine, method, path string, body interface{}) *httptest.ResponseRecorder {
-	w := httptest.NewRecorder()
-
-	var req *http.Request
-	if body != nil {
-		jsonBody, _ := json.Marshal(body)
-		req, _ = http.NewRequest(method, path, bytes.NewReader(jsonBody))
-		req.Header.Set("Content-Type", "application/json")
-	} else {
-		req, _ = http.NewRequest(method, path, nil)
-	}
-
-	// Add a valid JWT token (this would be a real token in integration tests)
-	req.Header.Set("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...")
-
-	router.ServeHTTP(w, req)
-	return w
-}
+// makeAuthenticatedRequest is a helper for integration tests (placeholder for future use)
+// func makeAuthenticatedRequest(router *gin.Engine, method, path string, body interface{}) *httptest.ResponseRecorder {
+// 	w := httptest.NewRecorder()
+//
+// 	var req *http.Request
+// 	if body != nil {
+// 		jsonBody, _ := json.Marshal(body)
+// 		req, _ = http.NewRequest(method, path, bytes.NewReader(jsonBody))
+// 		req.Header.Set("Content-Type", "application/json")
+// 	} else {
+// 		req, _ = http.NewRequest(method, path, nil)
+// 	}
+//
+// 	// Add a valid JWT token (this would be a real token in integration tests)
+// 	req.Header.Set("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...")
+//
+// 	router.ServeHTTP(w, req)
+// 	return w
+// }
