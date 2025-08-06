@@ -121,11 +121,12 @@ func (s *HTTPServer) setupPublicRoutes(rg *gin.RouterGroup) {
 		if s.services.AuthHandler != nil {
 			auth.POST("/register", s.services.AuthHandler.Register)
 			auth.POST("/login", s.services.AuthHandler.Login)
+			auth.POST("/refresh", s.services.AuthHandler.RefreshToken)
 		} else {
 			auth.POST("/register", s.notImplemented)
 			auth.POST("/login", s.notImplemented)
+			auth.POST("/refresh", s.notImplemented)
 		}
-		auth.POST("/refresh", s.notImplemented)
 		auth.POST("/password/forgot", s.notImplemented)
 		auth.POST("/password/reset", s.notImplemented)
 		auth.POST("/email/verify", s.notImplemented)
@@ -140,7 +141,11 @@ func (s *HTTPServer) setupProtectedRoutes(rg *gin.RouterGroup) {
 	// Auth endpoints
 	auth := rg.Group("/auth")
 	{
-		auth.POST("/logout", s.notImplemented)
+		if s.services.AuthHandler != nil {
+			auth.POST("/logout", s.services.AuthHandler.Logout)
+		} else {
+			auth.POST("/logout", s.notImplemented)
+		}
 		auth.GET("/sessions", s.notImplemented)
 		auth.DELETE("/sessions/:sessionId", s.notImplemented)
 		auth.POST("/email/resend", s.notImplemented)

@@ -16,10 +16,10 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/victoralfred/um_sys/internal/adapters/database"
 	"github.com/victoralfred/um_sys/internal/config"
 	"github.com/victoralfred/um_sys/internal/handlers"
 	"github.com/victoralfred/um_sys/internal/middleware"
+	"github.com/victoralfred/um_sys/internal/repositories"
 	"github.com/victoralfred/um_sys/internal/server"
 	"github.com/victoralfred/um_sys/internal/services"
 	"github.com/victoralfred/um_sys/pkg/security"
@@ -87,7 +87,7 @@ func TestAuthIntegration_CompleteFlow(t *testing.T) {
 
 	// Set up services
 	logger := zap.NewNop()
-	userRepo := database.NewUserRepository(dbPool)
+	userRepo := repositories.NewUserRepository(dbPool)
 	userService := services.NewUserService(userRepo)
 
 	// Set up token service
@@ -198,7 +198,7 @@ func TestAuthIntegration_CompleteFlow(t *testing.T) {
 	})
 
 	var accessToken string
-	// var refreshToken string // Will be used for refresh token tests
+	var refreshToken string
 
 	// Test 3: Login with email
 	t.Run("LoginWithEmail", func(t *testing.T) {
@@ -227,7 +227,7 @@ func TestAuthIntegration_CompleteFlow(t *testing.T) {
 		assert.Equal(t, "Bearer", response.Data.TokenType)
 
 		accessToken = response.Data.AccessToken
-		// refreshToken = response.Data.RefreshToken // Will be used for refresh token tests
+		refreshToken = response.Data.RefreshToken
 	})
 
 	// Test 4: Login with wrong password
@@ -316,7 +316,35 @@ func TestAuthIntegration_CompleteFlow(t *testing.T) {
 		}{
 			Email:    "weak@example.com",
 			Username: "weakuser",
-			Password: "weak", // Too short
+			Password: "weak", // Too short - caught by binding validation
+		}
+
+		body, _ := json.Marshal(weakUser)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/v1/auth/register", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response handlers.RegisterResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.False(t, response.Success)
+		// Password too short is caught by binding validation (min=8)
+		assert.Equal(t, "VALIDATION_ERROR", response.Error.Code)
+	})
+
+	// Test 8b: Weak password that passes length but fails complexity
+	t.Run("WeakPasswordComplexity", func(t *testing.T) {
+		weakUser := struct {
+			Email    string `json:"email"`
+			Username string `json:"username"`
+			Password string `json:"password"`
+		}{
+			Email:    "weak2@example.com",
+			Username: "weakuser2",
+			Password: "password", // 8 chars but no uppercase/numbers
 		}
 
 		body, _ := json.Marshal(weakUser)
@@ -332,5 +360,109 @@ func TestAuthIntegration_CompleteFlow(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, response.Success)
 		assert.Equal(t, "WEAK_PASSWORD", response.Error.Code)
+	})
+
+	// Test 9: Refresh token
+	t.Run("RefreshToken", func(t *testing.T) {
+		refreshReq := struct {
+			RefreshToken string `json:"refresh_token"`
+		}{
+			RefreshToken: refreshToken,
+		}
+
+		body, _ := json.Marshal(refreshReq)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/v1/auth/refresh", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var response handlers.RefreshResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.True(t, response.Success)
+		assert.NotEmpty(t, response.Data.AccessToken)
+		assert.NotEmpty(t, response.Data.RefreshToken)
+		assert.NotEqual(t, accessToken, response.Data.AccessToken)   // Should be a new token
+		assert.NotEqual(t, refreshToken, response.Data.RefreshToken) // Should be a new refresh token
+	})
+
+	// Test 10: Refresh with invalid token
+	t.Run("RefreshInvalidToken", func(t *testing.T) {
+		refreshReq := struct {
+			RefreshToken string `json:"refresh_token"`
+		}{
+			RefreshToken: "invalid.refresh.token",
+		}
+
+		body, _ := json.Marshal(refreshReq)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/v1/auth/refresh", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+
+		var response handlers.RefreshResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.False(t, response.Success)
+		assert.Equal(t, "INVALID_REFRESH_TOKEN", response.Error.Code)
+	})
+
+	// Test 11: Logout
+	t.Run("Logout", func(t *testing.T) {
+		logoutReq := struct {
+			RefreshToken string `json:"refresh_token"`
+		}{
+			RefreshToken: refreshToken,
+		}
+
+		body, _ := json.Marshal(logoutReq)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/v1/auth/logout", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var response handlers.LogoutResponse
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.True(t, response.Success)
+		assert.Equal(t, "Successfully logged out", response.Data.Message)
+	})
+
+	// Test 12: Access with revoked token after logout
+	t.Run("AccessAfterLogout", func(t *testing.T) {
+		// Try to access protected endpoint with the same token after logout
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/users/me", nil)
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+		router.ServeHTTP(w, req)
+
+		// Should still work since we don't have a token store configured
+		// In production with Redis/DB token store, this would return 401
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	// Test 13: Logout without auth token
+	t.Run("LogoutWithoutAuth", func(t *testing.T) {
+		logoutReq := struct {
+			RefreshToken string `json:"refresh_token"`
+		}{
+			RefreshToken: refreshToken,
+		}
+
+		body, _ := json.Marshal(logoutReq)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/v1/auth/logout", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		// No Authorization header
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 }

@@ -314,3 +314,29 @@ func (s *TokenService) mapToClaims(m jwt.MapClaims) (*auth.Claims, error) {
 		JTI:       m["jti"].(string),
 	}, nil
 }
+
+// RevokeRefreshToken revokes a refresh token by parsing it and revoking its JTI
+func (s *TokenService) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
+	// Parse the refresh token to get the JTI
+	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
+		// Check signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return s.secretKey, nil
+	})
+
+	// If we can't parse the token, consider it already invalid
+	if err != nil {
+		return nil
+	}
+
+	// Extract claims and revoke the token
+	if mapClaims, ok := token.Claims.(jwt.MapClaims); ok {
+		if jti, ok := mapClaims["jti"].(string); ok && jti != "" {
+			return s.RevokeToken(ctx, jti)
+		}
+	}
+
+	return nil
+}

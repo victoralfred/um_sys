@@ -369,6 +369,142 @@ func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
 	})
 }
 
+// RefreshRequest represents refresh token request
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// RefreshResponse represents refresh token response
+type RefreshResponse struct {
+	Success bool                 `json:"success"`
+	Data    *RefreshResponseData `json:"data,omitempty"`
+	Error   *ErrorResponse       `json:"error,omitempty"`
+}
+
+type RefreshResponseData struct {
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token"`
+	TokenType    string    `json:"token_type"`
+	ExpiresIn    int       `json:"expires_in"`
+	ExpiresAt    time.Time `json:"expires_at"`
+}
+
+// RefreshToken handles token refresh
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	var req RefreshRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, RefreshResponse{
+			Success: false,
+			Error: &ErrorResponse{
+				Code:    "VALIDATION_ERROR",
+				Message: "Invalid request data",
+				Details: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Refresh tokens
+	tokenPair, err := h.tokenService.RefreshTokens(c.Request.Context(), req.RefreshToken)
+	if err != nil {
+		h.logger.Error("Failed to refresh tokens", zap.Error(err))
+		c.JSON(http.StatusUnauthorized, RefreshResponse{
+			Success: false,
+			Error: &ErrorResponse{
+				Code:    "INVALID_REFRESH_TOKEN",
+				Message: "Invalid or expired refresh token",
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, RefreshResponse{
+		Success: true,
+		Data: &RefreshResponseData{
+			AccessToken:  tokenPair.AccessToken,
+			RefreshToken: tokenPair.RefreshToken,
+			TokenType:    tokenPair.TokenType,
+			ExpiresIn:    tokenPair.ExpiresIn,
+			ExpiresAt:    tokenPair.ExpiresAt,
+		},
+	})
+}
+
+// LogoutRequest represents logout request
+type LogoutRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// LogoutResponse represents logout response
+type LogoutResponse struct {
+	Success bool           `json:"success"`
+	Data    *LogoutData    `json:"data,omitempty"`
+	Error   *ErrorResponse `json:"error,omitempty"`
+}
+
+type LogoutData struct {
+	Message string `json:"message"`
+}
+
+// Logout handles user logout
+func (h *AuthHandler) Logout(c *gin.Context) {
+	var req LogoutRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, LogoutResponse{
+			Success: false,
+			Error: &ErrorResponse{
+				Code:    "VALIDATION_ERROR",
+				Message: "Invalid request data",
+				Details: err.Error(),
+			},
+		})
+		return
+	}
+
+	// Get user ID from context (set by auth middleware)
+	userIDStr, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, LogoutResponse{
+			Success: false,
+			Error: &ErrorResponse{
+				Code:    "UNAUTHORIZED",
+				Message: "User not authenticated",
+			},
+		})
+		return
+	}
+
+	// Get token ID from context
+	tokenIDStr, _ := c.Get("jti")
+	tokenID := ""
+	if tokenIDStr != nil {
+		tokenID = tokenIDStr.(string)
+	}
+
+	// Revoke the access token
+	if tokenID != "" {
+		if err := h.tokenService.RevokeToken(c.Request.Context(), tokenID); err != nil {
+			h.logger.Error("Failed to revoke access token", zap.Error(err), zap.String("token_id", tokenID))
+		}
+	}
+
+	// Revoke the refresh token
+	if err := h.tokenService.RevokeRefreshToken(c.Request.Context(), req.RefreshToken); err != nil {
+		h.logger.Error("Failed to revoke refresh token", zap.Error(err))
+		// Don't fail the logout even if revocation fails
+	}
+
+	// Log the logout event
+	h.logger.Info("User logged out", zap.String("user_id", userIDStr.(string)))
+
+	c.JSON(http.StatusOK, LogoutResponse{
+		Success: true,
+		Data: &LogoutData{
+			Message: "Successfully logged out",
+		},
+	})
+}
+
 // ErrorResponse represents an error response
 type ErrorResponse struct {
 	Code    string `json:"code"`
