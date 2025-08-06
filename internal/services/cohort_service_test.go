@@ -285,7 +285,7 @@ func TestCohortService(t *testing.T) {
 		cohortID := uuid.New()
 
 		// Export cohort data as CSV
-		csvData, err := service.ExportCohort(ctx, cohortID, ExportParams{
+		csvData, err := service.ExportCohort(ctx, cohortID, CohortExportParams{
 			Format:         "csv",
 			IncludeEvents:  true,
 			IncludeMetrics: true,
@@ -297,7 +297,7 @@ func TestCohortService(t *testing.T) {
 		assert.Contains(t, string(csvData), "joined_date")
 
 		// Export as JSON
-		jsonData, err := service.ExportCohort(ctx, cohortID, ExportParams{
+		jsonData, err := service.ExportCohort(ctx, cohortID, CohortExportParams{
 			Format: "json",
 		})
 
