@@ -115,7 +115,7 @@ func TestEventTypeRegistry(t *testing.T) {
 
 		err = registry.Validate(event)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid type for field: response_time")
+		assert.Contains(t, err.Error(), "invalid type for field response_time")
 	})
 
 	t.Run("List registered event types", func(t *testing.T) {

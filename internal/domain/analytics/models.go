@@ -30,6 +30,7 @@ type Event struct {
 	Timestamp  time.Time              `json:"timestamp"`
 	Properties map[string]interface{} `json:"properties,omitempty"`
 	Context    *EventContext          `json:"context,omitempty"`
+	Version    int                    `json:"version,omitempty"`
 	CreatedAt  time.Time              `json:"created_at"`
 }
 

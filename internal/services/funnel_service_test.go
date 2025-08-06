@@ -111,7 +111,7 @@ func TestFunnelService(t *testing.T) {
 		service := NewFunnelService(nil, nil)
 
 		funnelID := uuid.New()
-		analysis := service.AnalyzeFunnel(ctx, funnelID, FunnelAnalysisParams{
+		_, _ = service.AnalyzeFunnel(ctx, funnelID, FunnelAnalysisParams{
 			StartTime: time.Now().Add(-30 * 24 * time.Hour),
 			EndTime:   time.Now(),
 		})
