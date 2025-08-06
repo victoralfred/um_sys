@@ -71,9 +71,9 @@ func TestStructuredLogger(t *testing.T) {
 		logger := createTestLogger(&buf)
 
 		// Add context values
-		ctx = context.WithValue(ctx, "request_id", "req-123")
-		ctx = context.WithValue(ctx, "user_id", "user-456")
-		ctx = context.WithValue(ctx, "trace_id", "trace-789")
+		ctx = context.WithValue(ctx, requestIDKey, "req-123")
+		ctx = context.WithValue(ctx, userIDKey, "user-456")
+		ctx = context.WithValue(ctx, traceIDKey, "trace-789")
 
 		logger.Info(ctx, "operation completed", nil)
 
@@ -112,7 +112,7 @@ func TestStructuredLogger(t *testing.T) {
 
 		// Verify PII is masked
 		var entry LogEntry
-		json.Unmarshal(buf.Bytes(), &entry)
+		_ = json.Unmarshal(buf.Bytes(), &entry)
 		assert.Equal(t, "***REDACTED***", entry.Fields["email"])
 		assert.Equal(t, "***REDACTED***", entry.Fields["ssn"])
 		assert.Equal(t, "***REDACTED***", entry.Fields["credit_card"])
@@ -170,7 +170,7 @@ func TestStructuredLogger(t *testing.T) {
 				continue
 			}
 			var entry LogEntry
-			json.Unmarshal([]byte(log), &entry)
+			_ = json.Unmarshal([]byte(log), &entry)
 			assert.Equal(t, "error", entry.Level)
 		}
 	})
@@ -227,7 +227,7 @@ func TestLoggingMiddleware(t *testing.T) {
 		// Verify request is logged
 		var entry LogEntry
 		logs := strings.Split(strings.TrimSpace(buf.String()), "\n")
-		json.Unmarshal([]byte(logs[len(logs)-1]), &entry)
+		_ = json.Unmarshal([]byte(logs[len(logs)-1]), &entry)
 
 		assert.Equal(t, "HTTP Request", entry.Message)
 		assert.Equal(t, "GET", entry.Fields["method"])
@@ -257,7 +257,7 @@ func TestLoggingMiddleware(t *testing.T) {
 		// Verify error is logged at error level
 		var entry LogEntry
 		logs := strings.Split(strings.TrimSpace(buf.String()), "\n")
-		json.Unmarshal([]byte(logs[len(logs)-1]), &entry)
+		_ = json.Unmarshal([]byte(logs[len(logs)-1]), &entry)
 
 		assert.Equal(t, "error", entry.Level)
 		assert.Equal(t, 500, entry.Fields["status"])
@@ -290,7 +290,7 @@ func TestLoggingMiddleware(t *testing.T) {
 		// Should log as warning due to slow response
 		var entry LogEntry
 		logs := strings.Split(strings.TrimSpace(buf.String()), "\n")
-		json.Unmarshal([]byte(logs[len(logs)-1]), &entry)
+		_ = json.Unmarshal([]byte(logs[len(logs)-1]), &entry)
 
 		assert.Equal(t, "warn", entry.Level)
 		assert.Contains(t, entry.Message, "Slow")
@@ -298,6 +298,7 @@ func TestLoggingMiddleware(t *testing.T) {
 }
 
 func TestLogRotation(t *testing.T) {
+	ctx := context.Background()
 	t.Run("Size-based rotation", func(t *testing.T) {
 		config := &LogConfig{
 			Level:      "info",
@@ -345,6 +346,7 @@ func TestLogRotation(t *testing.T) {
 }
 
 func TestOpenTelemetryIntegration(t *testing.T) {
+	ctx := context.Background()
 	t.Run("Trace context propagation", func(t *testing.T) {
 		var buf bytes.Buffer
 		config := &LogConfig{
@@ -361,13 +363,13 @@ func TestOpenTelemetryIntegration(t *testing.T) {
 		// Create span context
 		traceID := uuid.New().String()
 		spanID := uuid.New().String()[:16]
-		ctx = WithTraceContext(ctx, traceID, spanID)
+		ctx := WithTraceContext(ctx, traceID, spanID)
 
 		logger.Info(ctx, "traced operation", nil)
 
 		// Verify trace context is included
 		var entry LogEntry
-		json.Unmarshal(buf.Bytes(), &entry)
+		_ = json.Unmarshal(buf.Bytes(), &entry)
 		assert.Equal(t, traceID, entry.Trace.TraceID)
 		assert.Equal(t, spanID, entry.Trace.SpanID)
 	})
@@ -399,6 +401,7 @@ func TestOpenTelemetryIntegration(t *testing.T) {
 }
 
 func TestPerformanceOptimizations(t *testing.T) {
+	ctx := context.Background()
 	t.Run("Zero allocation logging", func(t *testing.T) {
 		config := &LogConfig{
 			Level:          "info",
@@ -442,6 +445,7 @@ func TestPerformanceOptimizations(t *testing.T) {
 }
 
 func TestLoggerConfiguration(t *testing.T) {
+	ctx := context.Background()
 	t.Run("Dynamic level change", func(t *testing.T) {
 		var buf bytes.Buffer
 		config := &LogConfig{
@@ -489,10 +493,10 @@ func TestLoggerConfiguration(t *testing.T) {
 			MaskPII: true,
 		}
 		data, _ = json.Marshal(updatedConfig)
-		os.WriteFile(configFile, data, 0644)
+		_ = os.WriteFile(configFile, data, 0644)
 
 		// Trigger reload
-		logger.ReloadConfig()
+		_ = logger.ReloadConfig()
 
 		// Verify new config is applied
 		config := logger.GetConfig()
@@ -524,7 +528,4 @@ type LogEntry struct {
 	Error     string                 `json:"error,omitempty"`
 }
 
-type TraceInfo struct {
-	TraceID string `json:"trace_id"`
-	SpanID  string `json:"span_id"`
-}
+// TraceInfo is defined in structured_logger.go
