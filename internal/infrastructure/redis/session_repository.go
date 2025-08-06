@@ -35,6 +35,13 @@ func NewSessionRepository(addr string, db int, password string) *SessionReposito
 	}
 }
 
+// NewSessionRepositoryWithClient creates a new Redis session repository with existing client (for testing)
+func NewSessionRepositoryWithClient(client *redis.Client) *SessionRepository {
+	return &SessionRepository{
+		client: client,
+	}
+}
+
 // Store saves a session to Redis
 func (r *SessionRepository) Store(ctx context.Context, sess *session.Session) error {
 	// Serialize session to JSON
