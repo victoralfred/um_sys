@@ -44,8 +44,9 @@ type Services struct {
 	FeatureService *services.FeatureService
 
 	// Handlers
-	AuthHandler *handlers.AuthHandler
-	DocsHandler *handlers.DocsHandler
+	AuthHandler    *handlers.AuthHandler
+	ProfileHandler *handlers.ProfileHandler
+	DocsHandler    *handlers.DocsHandler
 }
 
 // New creates a new server instance - Factory pattern
@@ -170,12 +171,35 @@ func (s *HTTPServer) setupProtectedRoutes(rg *gin.RouterGroup) {
 		} else {
 			users.GET("/me", s.notImplemented)
 		}
-		users.PATCH("/me", s.notImplemented)
-		users.POST("/me/avatar", s.notImplemented)
+		if s.services.ProfileHandler != nil {
+			users.PATCH("/me", s.services.ProfileHandler.UpdateProfile)
+			users.POST("/me/avatar", s.services.ProfileHandler.UploadProfilePicture)
+		} else {
+			users.PATCH("/me", s.notImplemented)
+			users.POST("/me/avatar", s.notImplemented)
+		}
 		users.POST("/me/password", s.notImplemented)
 		users.DELETE("/me", s.notImplemented)
 		users.GET("/me/roles", s.notImplemented)
 		users.GET("/search", s.notImplemented)
+	}
+
+	// Profile endpoints
+	profile := rg.Group("/profile")
+	{
+		if s.services.ProfileHandler != nil {
+			profile.GET("/:id", s.services.ProfileHandler.GetProfile)
+			profile.PUT("/:id", s.services.ProfileHandler.UpdateProfile)
+			profile.POST("/:id/picture", s.services.ProfileHandler.UploadProfilePicture)
+			profile.GET("/:id/preferences", s.services.ProfileHandler.GetUserPreferences)
+			profile.PUT("/:id/preferences", s.services.ProfileHandler.UpdateUserPreferences)
+		} else {
+			profile.GET("/:id", s.notImplemented)
+			profile.PUT("/:id", s.notImplemented)
+			profile.POST("/:id/picture", s.notImplemented)
+			profile.GET("/:id/preferences", s.notImplemented)
+			profile.PUT("/:id/preferences", s.notImplemented)
+		}
 	}
 
 	// MFA endpoints
