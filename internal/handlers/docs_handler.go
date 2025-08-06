@@ -118,6 +118,9 @@ func (h *DocsHandler) GetRedocUI(c *gin.Context) {
             padding: 20px; 
             text-align: center;
         }
+        #redoc-container {
+            margin-top: 0;
+        }
     </style>
     <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
 </head>
@@ -126,7 +129,32 @@ func (h *DocsHandler) GetRedocUI(c *gin.Context) {
         <h1>UManager API Documentation</h1>
         <p>Interactive API documentation powered by Redoc</p>
     </div>
-    <redoc spec-url='/v1/docs/swagger.json'></redoc>
+    <div id="redoc-container"></div>
+    
+    <script>
+        Redoc.init('/v1/docs/swagger.json', {
+            scrollYOffset: 50,
+            theme: {
+                colors: {
+                    primary: {
+                        main: '#1976d2'
+                    }
+                },
+                typography: {
+                    fontSize: '14px',
+                    lineHeight: '1.5em',
+                    code: {
+                        fontSize: '13px',
+                        fontFamily: 'Courier, monospace'
+                    },
+                    headings: {
+                        fontFamily: 'Montserrat, sans-serif',
+                        fontWeight: '400'
+                    }
+                }
+            }
+        }, document.getElementById('redoc-container'));
+    </script>
 </body>
 </html>`
 
