@@ -48,6 +48,7 @@ git push -u origin feature/rbac-system
 git push -u origin feature/mfa-support
 git push -u origin feature/subscription-billing
 git push -u origin feature/password-policies
+git push -u origin feature/auth-implementation
 
 echo -e "${GREEN}✓ All branches pushed successfully!${NC}"
 

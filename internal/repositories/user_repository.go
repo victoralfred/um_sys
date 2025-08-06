@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -413,6 +414,149 @@ func (r *UserRepository) IncrementFailedLoginAttempts(ctx context.Context, id uu
 	if result.RowsAffected() == 0 {
 		return user.ErrUserNotFound
 	}
+
+	return nil
+}
+
+// List returns a paginated list of users
+func (r *UserRepository) List(ctx context.Context, filter user.ListFilter) ([]*user.User, int64, error) {
+	// Build query with filters
+	query := `
+		SELECT 
+			id, email, username, password_hash,
+			first_name, last_name, phone_number,
+			is_active, is_verified, verified_at,
+			last_login_at, failed_login_attempts, locked_until,
+			mfa_enabled, created_at, updated_at
+		FROM users
+		WHERE deleted_at IS NULL`
+
+	countQuery := `SELECT COUNT(*) FROM users WHERE deleted_at IS NULL`
+
+	// Apply filters
+	args := []interface{}{}
+	conditions := []string{}
+
+	if filter.Search != "" {
+		conditions = append(conditions, fmt.Sprintf("(email ILIKE $%d OR username ILIKE $%d OR first_name ILIKE $%d OR last_name ILIKE $%d)",
+			len(args)+1, len(args)+1, len(args)+1, len(args)+1))
+		searchPattern := "%" + filter.Search + "%"
+		args = append(args, searchPattern)
+	}
+
+	if filter.EmailVerified != nil {
+		conditions = append(conditions, fmt.Sprintf("is_verified = $%d", len(args)+1))
+		args = append(args, *filter.EmailVerified)
+	}
+
+	if filter.MFAEnabled != nil {
+		conditions = append(conditions, fmt.Sprintf("mfa_enabled = $%d", len(args)+1))
+		args = append(args, *filter.MFAEnabled)
+	}
+
+	if len(conditions) > 0 {
+		whereClause := " AND " + strings.Join(conditions, " AND ")
+		query += whereClause
+		countQuery += whereClause
+	}
+
+	// Get total count
+	var total int64
+	err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count users: %w", err)
+	}
+
+	// Add ordering and pagination
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	args = append(args, filter.Limit, filter.Offset)
+
+	// Execute query
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to list users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []*user.User
+	for rows.Next() {
+		var u user.User
+		var isActive, isVerified, mfaEnabled bool
+		var verifiedAt, lastLoginAt, lockedUntil sql.NullTime
+
+		err := rows.Scan(
+			&u.ID,
+			&u.Email,
+			&u.Username,
+			&u.PasswordHash,
+			&u.FirstName,
+			&u.LastName,
+			&u.PhoneNumber,
+			&isActive,
+			&isVerified,
+			&verifiedAt,
+			&lastLoginAt,
+			&u.FailedLoginAttempts,
+			&lockedUntil,
+			&mfaEnabled,
+			&u.CreatedAt,
+			&u.UpdatedAt,
+		)
+
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to scan user: %w", err)
+		}
+
+		// Map database fields to domain model
+		if isActive {
+			u.Status = user.StatusActive
+		} else {
+			u.Status = user.StatusInactive
+		}
+
+		u.EmailVerified = isVerified
+		if verifiedAt.Valid {
+			u.EmailVerifiedAt = &verifiedAt.Time
+		}
+		if lastLoginAt.Valid {
+			u.LastLoginAt = &lastLoginAt.Time
+		}
+		if lockedUntil.Valid {
+			u.LockedUntil = &lockedUntil.Time
+		}
+		u.MFAEnabled = mfaEnabled
+
+		users = append(users, &u)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return users, total, nil
+}
+
+// UpdateMFA updates MFA settings for a user
+func (r *UserRepository) UpdateMFA(ctx context.Context, id uuid.UUID, enabled bool, secret string, backupCodes []string) error {
+	query := `
+		UPDATE users 
+		SET 
+			mfa_enabled = $2,
+			mfa_secret = $3,
+			updated_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL`
+
+	result, err := r.db.Exec(ctx, query, id, enabled, secret)
+
+	if err != nil {
+		return fmt.Errorf("failed to update MFA settings: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return user.ErrUserNotFound
+	}
+
+	// TODO: Store backup codes in a separate table
 
 	return nil
 }
