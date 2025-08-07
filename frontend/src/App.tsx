@@ -316,7 +316,9 @@ const stopRealtimeSimulation = () => {
   
   const interval = simulationInterval();
   if (interval) {
-    window.clearInterval(interval);
+    if (typeof window !== 'undefined') {
+      window.clearInterval(interval);
+    }
     setSimulationInterval(null);
   }
   
@@ -326,7 +328,6 @@ const stopRealtimeSimulation = () => {
 
 // Keyboard shortcuts system
 const handleKeyboardShortcuts = (event: KeyboardEvent) => {
-  if (!keyboardEnabled()) return;
   
   const { key, ctrlKey, metaKey, altKey, shiftKey } = event;
   const isCmd = ctrlKey || metaKey;
@@ -504,7 +505,7 @@ const updatePerformanceMetrics = () => {
   const memoryUsage = Math.floor(15 + Math.random() * 25);
   
   // Count DOM elements as component count proxy
-  const componentCount = document.querySelectorAll('*').length;
+  const componentCount = typeof document !== 'undefined' ? document.querySelectorAll('*').length : 100;
   
   // Simulate render time (in ms)
   const renderTime = Math.floor(8 + Math.random() * 12);
