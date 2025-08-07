@@ -1,1 +1,0 @@
-Testing pre-commit hook directly... echo IMPL: Test message bash .git/hooks/pre-commit IMPL: Test message 2

@@ -52,3 +52,18 @@ logs/
 # Temporary files
 tmp/
 temp/
+# Node.js dependencies
+node_modules/
+# Yarn dependencies
+frontend/yarn.lock
+# NPM dependencies
+frontend/package-lock.json
+frontend/node_modules/
+frontend/dist/
+# Build directories
+frontend/.env
+frontend/.env.example
+frontend/dev.log
+
+# Documentation (keep local)
+docs/

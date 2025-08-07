@@ -1,0 +1,172 @@
+run:
+  timeout: 10m
+  issues-exit-code: 1
+  tests: true
+  skip-dirs:
+    - vendor
+    - bin
+    - .git
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*_mock\\.go$"
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    
+  govet:
+    enable-all: true
+    disable:
+      - shadow
+      - fieldalignment
+      
+  gocyclo:
+    min-complexity: 15
+    
+  dupl:
+    threshold: 100
+    
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+    
+  misspell:
+    locale: US
+    
+  unused:
+    check-exported: true
+    
+  unparam:
+    check-exported: true
+    
+  nakedret:
+    max-func-lines: 30
+    
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - wrapperFunc
+      - dupImport
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+      - importShadow
+      
+  funlen:
+    lines: 100
+    statements: 50
+    
+  gosec:
+    excludes:
+      - G104 # Audit errors not checked
+      - G204 # Subprocess launched with variable
+      
+  lll:
+    line-length: 120
+    
+  mnd:
+    checks:
+      - argument
+      - case
+      - condition
+      - operation
+      - return
+      - assign
+    ignored-numbers:
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '10'
+      - '24'
+      - '60'
+      - '100'
+      - '200'
+      - '400'
+      - '404'
+      - '500'
+      - '1000'
+      - '1024'
+    ignored-functions:
+      - 'make'
+      - 'len'
+      - 'cap'
+      - 'strconv.*'
+
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - dupl
+    - errcheck
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - mnd
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - staticcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - mnd
+        - funlen
+        
+    # Exclude lll issues for long lines with go:generate
+    - linters:
+        - lll
+      source: "^//go:generate "
+      
+    # Exclude known linter issues
+    - path: internal/adapters/
+      text: "don't use an underscore in package name"
+      
+    # Exclude shadow checking in test files
+    - path: _test\.go
+      text: "shadow: declaration of"
+      
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+
+severity:
+  default-severity: error
+  case-sensitive: false

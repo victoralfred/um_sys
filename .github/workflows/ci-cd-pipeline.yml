@@ -51,23 +51,24 @@ jobs:
         with:
           filters: |
             security:
-              - 'go.mod'
-              - 'go.sum'
-              - '**/*.go'
-              - 'Dockerfile*'
+              - 'backend/go.mod'
+              - 'backend/go.sum'
+              - 'backend/**/*.go'
+              - 'backend/Dockerfile*'
               - '.github/workflows/**'
             tests:
-              - '**/*.go'
-              - '**/*_test.go'
-              - 'go.mod'
-              - 'go.sum'
+              - 'backend/**/*.go'
+              - 'backend/**/*_test.go'
+              - 'backend/go.mod'
+              - 'backend/go.sum'
             docker:
-              - 'Dockerfile*'
+              - 'backend/Dockerfile*'
               - 'docker-compose*.yml'
-              - 'cmd/**'
-              - 'internal/**'
+              - 'backend/cmd/**'
+              - 'backend/internal/**'
               
       - name: Validate Go modules
+        working-directory: ./backend
         run: |
           go mod verify
           go mod tidy
@@ -77,14 +78,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.go-cache-paths.outputs.go-build }}
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/*.go') }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('backend/**/*.go') }}
           restore-keys: ${{ runner.os }}-go-build-
           
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
           path: ${{ steps.go-cache-paths.outputs.go-mod }}
-          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('backend/go.sum') }}
           restore-keys: ${{ runner.os }}-go-mod-
 
   # Job 2: Code Quality Analysis
@@ -117,12 +118,15 @@ jobs:
         uses: golangci/golangci-lint-action@v4
         with:
           version: latest
+          working-directory: ./backend
           args: --timeout=10m --config=.golangci.yml
           
       - name: Run Go vet
+        working-directory: ./backend
         run: go vet ./...
         
       - name: Check gofmt
+        working-directory: ./backend
         run: |
           if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
             echo "The following files are not formatted:"
@@ -131,19 +135,23 @@ jobs:
           fi
           
       - name: Analyze code complexity
+        working-directory: ./backend
         run: |
           go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
           gocyclo -over 15 .
           
       - name: Detect race conditions
+        working-directory: ./backend
         run: go build -race ./...
         
       - name: Check for ineffective assignments
+        working-directory: ./backend
         run: |
           go install github.com/gordonklaus/ineffassign@latest
           ineffassign ./...
           
       - name: Detect misspellings
+        working-directory: ./backend
         run: |
           go install github.com/client9/misspell/cmd/misspell@latest
           misspell -error .
@@ -207,6 +215,7 @@ jobs:
           category: "/language:go"
           
       - name: Run Nancy for dependency vulnerabilities
+        working-directory: ./backend
         run: |
           go install github.com/sonatypeossindex/nancy@latest
           go list -json -deps ./... | nancy sleuth
@@ -313,12 +322,14 @@ jobs:
           
       - name: Run database migrations
         run: |
-          migrate -path ./migrations -database "postgres://postgres:postgres@localhost:5432/umanager_test?sslmode=disable" up
+          migrate -path ./backend/migrations -database "postgres://postgres:postgres@localhost:5432/umanager_test?sslmode=disable" up
           
       - name: Install dependencies
+        working-directory: ./backend
         run: go mod download
         
       - name: Run unit tests with coverage
+        working-directory: ./backend
         env:
           TEST_DATABASE_URL: "postgres://postgres:postgres@localhost:5432/umanager_test?sslmode=disable"
           TEST_REDIS_URL: "redis://localhost:6379"
@@ -336,6 +347,7 @@ jobs:
           fi
           
       - name: Generate test report
+        working-directory: ./backend
         run: |
           go install github.com/jstemmer/go-junit-report@latest
           go test -v ./... 2>&1 | go-junit-report > test-results.xml
@@ -404,12 +416,14 @@ jobs:
           
       - name: Run database migrations
         run: |
-          migrate -path ./migrations -database "postgres://postgres:postgres@localhost:5432/umanager_integration?sslmode=disable" up
+          migrate -path ./backend/migrations -database "postgres://postgres:postgres@localhost:5432/umanager_integration?sslmode=disable" up
           
       - name: Build application
+        working-directory: ./backend
         run: go build -o bin/server ./cmd/server
         
       - name: Run integration tests
+        working-directory: ./backend
         env:
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/umanager_integration?sslmode=disable"
           REDIS_URL: "redis://localhost:6379"
@@ -419,6 +433,7 @@ jobs:
           go test -v -tags=integration ./internal/integration/... -timeout=20m
           
       - name: Run enterprise integration tests
+        working-directory: ./backend
         env:
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/umanager_integration?sslmode=disable"
           REDIS_URL: "redis://localhost:6379"
@@ -485,6 +500,7 @@ jobs:
           go install github.com/rakyll/hey@latest
           
       - name: Run benchmarks
+        working-directory: ./backend
         env:
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/umanager_perf?sslmode=disable"
           REDIS_URL: "redis://localhost:6379"
@@ -493,11 +509,13 @@ jobs:
           cat benchmark_results.txt
           
       - name: Memory profiling
+        working-directory: ./backend
         run: |
           go test -bench=BenchmarkStructuredLogging -memprofile=mem.prof ./internal/integration/...
           go tool pprof -text mem.prof > memory_profile.txt
           
       - name: CPU profiling
+        working-directory: ./backend
         run: |
           go test -bench=BenchmarkStreamAnalytics -cpuprofile=cpu.prof ./internal/integration/...
           go tool pprof -text cpu.prof > cpu_profile.txt
@@ -546,7 +564,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend
           push: false
           tags: user-management:${{ github.sha }}
           cache-from: type=gha
@@ -637,9 +655,10 @@ jobs:
         
       - name: Run database migrations
         run: |
-          migrate -path ./migrations -database "postgres://postgres:postgres@localhost:5432/umanager_e2e?sslmode=disable" up
+          migrate -path ./backend/migrations -database "postgres://postgres:postgres@localhost:5432/umanager_e2e?sslmode=disable" up
           
       - name: Build and start application
+        working-directory: ./backend
         env:
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/umanager_e2e?sslmode=disable"
           REDIS_URL: "redis://localhost:6379"
@@ -757,7 +776,7 @@ jobs:
       - name: Build and push staging image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend
           push: true
           tags: |
             ${{ secrets.CONTAINER_REGISTRY }}/user-management:staging-${{ github.sha }}
@@ -819,7 +838,7 @@ jobs:
       - name: Build and push production image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./backend
           push: true
           tags: |
             ${{ secrets.CONTAINER_REGISTRY }}/user-management:v${{ github.run_number }}

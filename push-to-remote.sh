@@ -39,6 +39,10 @@ echo -e "${YELLOW}Pushing branches to remote...${NC}"
 echo -e "${YELLOW}Pushing main branch...${NC}"
 git push -u origin main
 
+# Push staging branch
+echo -e "${YELLOW}Pushing staging branch...${NC}"
+git push -u origin staging
+
 # Push all feature branches
 echo -e "${YELLOW}Pushing feature branches...${NC}"
 git push -u origin feature/database-schema-design

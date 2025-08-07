@@ -1,0 +1,632 @@
+package services
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/victoralfred/um_sys/internal/domain/feature"
+)
+
+func TestFeatureFlagService(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("Create and retrieve feature flag", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create a boolean flag
+		flag := &feature.Flag{
+			Key:          "new-dashboard",
+			Name:         "New Dashboard UI",
+			Description:  "Enable new dashboard design for users",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		assert.NoError(t, err)
+		assert.NotEqual(t, uuid.Nil, flag.ID)
+
+		// Retrieve the flag
+		retrieved, err := service.GetFlag(ctx, flag.Key)
+		assert.NoError(t, err)
+		assert.Equal(t, flag.Key, retrieved.Key)
+		assert.Equal(t, flag.Name, retrieved.Name)
+		assert.Equal(t, flag.DefaultValue, retrieved.DefaultValue)
+	})
+
+	t.Run("Simple boolean flag evaluation", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag
+		flag := &feature.Flag{
+			Key:          "feature-x",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Evaluate for a user
+		userID := uuid.New()
+		context := &feature.Context{
+			UserID: &userID,
+		}
+
+		result, err := service.Evaluate(ctx, flag.Key, context)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result.Value)
+		assert.Equal(t, "default", result.Reason)
+	})
+
+	t.Run("User targeting rules", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag with user targeting
+		targetUserID := uuid.New()
+		flag := &feature.Flag{
+			Key:          "beta-feature",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+			Rules: []feature.Rule{
+				{
+					ID:       uuid.New(),
+					Priority: 1,
+					Name:     "Beta users",
+					Conditions: []feature.Condition{
+						{
+							Type:     "user",
+							Property: "user_id",
+							Operator: "equals",
+							Value:    targetUserID.String(),
+						},
+					},
+					Value:     true,
+					IsEnabled: true,
+				},
+			},
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Evaluate for targeted user
+		targetContext := &feature.Context{
+			UserID: &targetUserID,
+		}
+
+		result, err := service.Evaluate(ctx, flag.Key, targetContext)
+		assert.NoError(t, err)
+		assert.Equal(t, true, result.Value)
+		assert.Equal(t, "rule_match", result.Reason)
+
+		// Evaluate for non-targeted user
+		otherUserID := uuid.New()
+		otherContext := &feature.Context{
+			UserID: &otherUserID,
+		}
+
+		result, err = service.Evaluate(ctx, flag.Key, otherContext)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result.Value)
+		assert.Equal(t, "default", result.Reason)
+	})
+
+	t.Run("Percentage rollout", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag with percentage rollout
+		flag := &feature.Flag{
+			Key:          "gradual-rollout",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+			Rules: []feature.Rule{
+				{
+					ID:         uuid.New(),
+					Priority:   1,
+					Name:       "50% rollout",
+					Percentage: 50,
+					Value:      true,
+					IsEnabled:  true,
+				},
+			},
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Evaluate for multiple users
+		enabledCount := 0
+		totalUsers := 1000
+
+		for i := 0; i < totalUsers; i++ {
+			userID := uuid.New()
+			context := &feature.Context{
+				UserID: &userID,
+			}
+
+			result, err := service.Evaluate(ctx, flag.Key, context)
+			assert.NoError(t, err)
+			
+			if result.Value.(bool) {
+				enabledCount++
+			}
+		}
+
+		// Should be roughly 50% (with some variance)
+		percentage := float64(enabledCount) / float64(totalUsers) * 100
+		assert.InDelta(t, 50.0, percentage, 10.0, "Rollout percentage should be close to 50%")
+	})
+
+	t.Run("Property-based targeting", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag with property conditions
+		flag := &feature.Flag{
+			Key:          "premium-feature",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+			Rules: []feature.Rule{
+				{
+					ID:       uuid.New(),
+					Priority: 1,
+					Name:     "Premium users",
+					Conditions: []feature.Condition{
+						{
+							Type:     "property",
+							Property: "subscription_plan",
+							Operator: "equals",
+							Value:    "premium",
+						},
+					},
+					Value:     true,
+					IsEnabled: true,
+				},
+			},
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Evaluate for premium user
+		userID := uuid.New()
+		premiumContext := &feature.Context{
+			UserID: &userID,
+			Properties: map[string]interface{}{
+				"subscription_plan": "premium",
+			},
+		}
+
+		result, err := service.Evaluate(ctx, flag.Key, premiumContext)
+		assert.NoError(t, err)
+		assert.Equal(t, true, result.Value)
+
+		// Evaluate for free user
+		freeContext := &feature.Context{
+			UserID: &userID,
+			Properties: map[string]interface{}{
+				"subscription_plan": "free",
+			},
+		}
+
+		result, err = service.Evaluate(ctx, flag.Key, freeContext)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result.Value)
+	})
+
+	t.Run("String flag with variants", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create string flag with multiple values
+		flag := &feature.Flag{
+			Key:          "button-color",
+			Type:         feature.FlagTypeString,
+			DefaultValue: "blue",
+			IsEnabled:    true,
+			Rules: []feature.Rule{
+				{
+					ID:       uuid.New(),
+					Priority: 1,
+					Name:     "Test group",
+					Conditions: []feature.Condition{
+						{
+							Type:     "property",
+							Property: "test_group",
+							Operator: "equals",
+							Value:    "A",
+						},
+					},
+					Value:     "green",
+					IsEnabled: true,
+				},
+				{
+					ID:       uuid.New(),
+					Priority: 2,
+					Name:     "Test group B",
+					Conditions: []feature.Condition{
+						{
+							Type:     "property",
+							Property: "test_group",
+							Operator: "equals",
+							Value:    "B",
+						},
+					},
+					Value:     "red",
+					IsEnabled: true,
+				},
+			},
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Test different groups
+		userID := uuid.New()
+		
+		groupAContext := &feature.Context{
+			UserID:     &userID,
+			Properties: map[string]interface{}{"test_group": "A"},
+		}
+		result, err := service.Evaluate(ctx, flag.Key, groupAContext)
+		assert.NoError(t, err)
+		assert.Equal(t, "green", result.Value)
+
+		groupBContext := &feature.Context{
+			UserID:     &userID,
+			Properties: map[string]interface{}{"test_group": "B"},
+		}
+		result, err = service.Evaluate(ctx, flag.Key, groupBContext)
+		assert.NoError(t, err)
+		assert.Equal(t, "red", result.Value)
+
+		defaultContext := &feature.Context{
+			UserID: &userID,
+		}
+		result, err = service.Evaluate(ctx, flag.Key, defaultContext)
+		assert.NoError(t, err)
+		assert.Equal(t, "blue", result.Value)
+	})
+
+	t.Run("JSON configuration flag", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create JSON flag for configuration
+		defaultConfig := map[string]interface{}{
+			"rate_limit":   100,
+			"timeout_ms":   5000,
+			"retry_count":  3,
+		}
+
+		flag := &feature.Flag{
+			Key:          "api-config",
+			Type:         feature.FlagTypeJSON,
+			DefaultValue: defaultConfig,
+			IsEnabled:    true,
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Evaluate configuration
+		userID := uuid.New()
+		context := &feature.Context{
+			UserID: &userID,
+		}
+
+		result, err := service.Evaluate(ctx, flag.Key, context)
+		assert.NoError(t, err)
+		
+		config := result.Value.(map[string]interface{})
+		assert.Equal(t, float64(100), config["rate_limit"])
+		assert.Equal(t, float64(5000), config["timeout_ms"])
+		assert.Equal(t, float64(3), config["retry_count"])
+	})
+
+	t.Run("Bulk evaluation", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create multiple flags
+		flags := []*feature.Flag{
+			{
+				Key:          "feature-1",
+				Type:         feature.FlagTypeBoolean,
+				DefaultValue: true,
+				IsEnabled:    true,
+			},
+			{
+				Key:          "feature-2",
+				Type:         feature.FlagTypeString,
+				DefaultValue: "default",
+				IsEnabled:    true,
+			},
+			{
+				Key:          "feature-3",
+				Type:         feature.FlagTypeNumber,
+				DefaultValue: float64(42),
+				IsEnabled:    true,
+			},
+		}
+
+		for _, flag := range flags {
+			err := service.CreateFlag(ctx, flag)
+			require.NoError(t, err)
+		}
+
+		// Bulk evaluate
+		userID := uuid.New()
+		context := &feature.Context{
+			UserID: &userID,
+		}
+
+		results, err := service.EvaluateAll(ctx, context)
+		assert.NoError(t, err)
+		assert.Len(t, results, 3)
+		assert.Equal(t, true, results["feature-1"])
+		assert.Equal(t, "default", results["feature-2"])
+		assert.Equal(t, float64(42), results["feature-3"])
+	})
+
+	t.Run("Flag override for specific user", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag
+		flag := &feature.Flag{
+			Key:          "override-test",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Create override for specific user
+		userID := uuid.New()
+		override := &feature.Override{
+			FlagID: flag.ID,
+			UserID: &userID,
+			Value:  true,
+			Reason: "Testing override",
+		}
+
+		err = service.CreateOverride(ctx, override)
+		assert.NoError(t, err)
+
+		// Evaluate for overridden user
+		context := &feature.Context{
+			UserID: &userID,
+		}
+
+		result, err := service.Evaluate(ctx, flag.Key, context)
+		assert.NoError(t, err)
+		assert.Equal(t, true, result.Value)
+		assert.Equal(t, "override", result.Reason)
+	})
+
+	t.Run("Flag disabled returns default", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create disabled flag
+		flag := &feature.Flag{
+			Key:          "disabled-flag",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    false,
+			Rules: []feature.Rule{
+				{
+					ID:        uuid.New(),
+					Priority:  1,
+					Value:     true,
+					IsEnabled: true,
+				},
+			},
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Should return default when disabled
+		userID := uuid.New()
+		context := &feature.Context{
+			UserID: &userID,
+		}
+
+		result, err := service.Evaluate(ctx, flag.Key, context)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result.Value)
+		assert.Equal(t, "flag_disabled", result.Reason)
+	})
+
+	t.Run("Environment-based targeting", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag with environment rules
+		flag := &feature.Flag{
+			Key:          "env-feature",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+			Rules: []feature.Rule{
+				{
+					ID:       uuid.New(),
+					Priority: 1,
+					Name:     "Production only",
+					Conditions: []feature.Condition{
+						{
+							Type:     "property",
+							Property: "environment",
+							Operator: "equals",
+							Value:    "production",
+						},
+					},
+					Value:     true,
+					IsEnabled: true,
+				},
+			},
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Test production environment
+		userID := uuid.New()
+		prodContext := &feature.Context{
+			UserID:      &userID,
+			Environment: "production",
+			Properties: map[string]interface{}{
+				"environment": "production",
+			},
+		}
+
+		result, err := service.Evaluate(ctx, flag.Key, prodContext)
+		assert.NoError(t, err)
+		assert.Equal(t, true, result.Value)
+
+		// Test development environment
+		devContext := &feature.Context{
+			UserID:      &userID,
+			Environment: "development",
+			Properties: map[string]interface{}{
+				"environment": "development",
+			},
+		}
+
+		result, err = service.Evaluate(ctx, flag.Key, devContext)
+		assert.NoError(t, err)
+		assert.Equal(t, false, result.Value)
+	})
+
+	t.Run("Update flag configuration", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag
+		flag := &feature.Flag{
+			Key:          "updateable-flag",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Update flag
+		newDefault := true
+		update := &feature.UpdateFlagRequest{
+			DefaultValue: newDefault,
+			IsEnabled:    &[]bool{false}[0],
+		}
+
+		err = service.UpdateFlag(ctx, flag.Key, update)
+		assert.NoError(t, err)
+
+		// Verify update
+		updated, err := service.GetFlag(ctx, flag.Key)
+		assert.NoError(t, err)
+		assert.Equal(t, newDefault, updated.DefaultValue)
+		assert.False(t, updated.IsEnabled)
+	})
+
+	t.Run("Delete feature flag", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag
+		flag := &feature.Flag{
+			Key:          "deletable-flag",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Delete flag
+		err = service.DeleteFlag(ctx, flag.Key)
+		assert.NoError(t, err)
+
+		// Try to get deleted flag
+		_, err = service.GetFlag(ctx, flag.Key)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not found")
+	})
+
+	t.Run("Flag change history", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create flag
+		flag := &feature.Flag{
+			Key:          "tracked-flag",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Make some changes
+		update := &feature.UpdateFlagRequest{
+			DefaultValue: true,
+		}
+		err = service.UpdateFlag(ctx, flag.Key, update)
+		require.NoError(t, err)
+
+		// Get change history
+		history, err := service.GetFlagHistory(ctx, flag.Key)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, history)
+		
+		// Should have create and update events
+		assert.GreaterOrEqual(t, len(history), 2)
+	})
+
+	t.Run("Consistent hash for percentage rollout", func(t *testing.T) {
+		service := NewFeatureFlagService(nil, nil)
+
+		// Create percentage flag
+		flag := &feature.Flag{
+			Key:          "consistent-rollout",
+			Type:         feature.FlagTypeBoolean,
+			DefaultValue: false,
+			IsEnabled:    true,
+			Rules: []feature.Rule{
+				{
+					ID:         uuid.New(),
+					Priority:   1,
+					Percentage: 30,
+					Value:      true,
+					IsEnabled:  true,
+				},
+			},
+		}
+
+		err := service.CreateFlag(ctx, flag)
+		require.NoError(t, err)
+
+		// Same user should always get same result
+		userID := uuid.New()
+		context := &feature.Context{
+			UserID: &userID,
+		}
+
+		firstResult, err := service.Evaluate(ctx, flag.Key, context)
+		assert.NoError(t, err)
+
+		// Evaluate multiple times for same user
+		for i := 0; i < 10; i++ {
+			result, err := service.Evaluate(ctx, flag.Key, context)
+			assert.NoError(t, err)
+			assert.Equal(t, firstResult.Value, result.Value, "Same user should always get same result")
+		}
+	})
+}
