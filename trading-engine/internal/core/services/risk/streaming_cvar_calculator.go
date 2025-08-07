@@ -2,7 +2,6 @@ package risk
 
 import (
 	"math"
-	"sync"
 	"time"
 
 	"github.com/trading-engine/pkg/types"
