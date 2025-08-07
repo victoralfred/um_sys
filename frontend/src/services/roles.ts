@@ -17,7 +17,7 @@ export const rolesService = {
       pageSize: number;
       totalPages: number;
     };
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
@@ -28,7 +28,7 @@ export const rolesService = {
         pageSize: number;
         totalPages: number;
       };
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/roles', { params: filters });
   },
 
@@ -36,12 +36,12 @@ export const rolesService = {
   async getRole(roleId: string): Promise<{
     success: boolean;
     data?: Role;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
       data?: Role;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/roles/${roleId}`);
   },
 
@@ -53,12 +53,12 @@ export const rolesService = {
   }): Promise<{
     success: boolean;
     data?: Role;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
       data?: Role;
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/roles', roleData);
   },
 
@@ -70,23 +70,23 @@ export const rolesService = {
   }): Promise<{
     success: boolean;
     data?: Role;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.put<{
       success: boolean;
       data?: Role;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/roles/${roleId}`, updates);
   },
 
   // Delete a role
   async deleteRole(roleId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.delete<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/roles/${roleId}`);
   },
 
@@ -94,34 +94,34 @@ export const rolesService = {
   async getRolePermissions(roleId: string): Promise<{
     success: boolean;
     data?: Permission[];
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
       data?: Permission[];
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/roles/${roleId}/permissions`);
   },
 
   // Assign permission to role
   async assignPermission(roleId: string, permissionId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/roles/${roleId}/permissions`, { permissionId });
   },
 
   // Remove permission from role
   async removePermission(roleId: string, permissionId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.delete<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/roles/${roleId}/permissions/${permissionId}`);
   },
 
@@ -141,7 +141,7 @@ export const rolesService = {
       pageSize: number;
       totalPages: number;
     };
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
@@ -152,7 +152,7 @@ export const rolesService = {
         pageSize: number;
         totalPages: number;
       };
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/permissions', { params: filters });
   },
 
@@ -164,12 +164,12 @@ export const rolesService = {
   }): Promise<{
     success: boolean;
     data?: Permission;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
       data?: Permission;
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/permissions', permissionData);
   },
 
@@ -181,23 +181,23 @@ export const rolesService = {
   }): Promise<{
     success: boolean;
     data?: Permission;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.put<{
       success: boolean;
       data?: Permission;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/permissions/${permissionId}`, updates);
   },
 
   // Delete a permission
   async deletePermission(permissionId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.delete<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/permissions/${permissionId}`);
   },
 
@@ -206,7 +206,7 @@ export const rolesService = {
     userId: string;
     resource: string;
     action: string;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
   }): Promise<{
     success: boolean;
     data?: {
@@ -214,7 +214,7 @@ export const rolesService = {
       reason?: string;
       matchedRules?: string[];
     };
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
@@ -223,7 +223,7 @@ export const rolesService = {
         reason?: string;
         matchedRules?: string[];
       };
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/rbac/check-access', data);
   },
 
@@ -244,7 +244,7 @@ export const rolesService = {
       pageSize: number;
       totalPages: number;
     };
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
@@ -255,7 +255,7 @@ export const rolesService = {
         pageSize: number;
         totalPages: number;
       };
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/policy-rules', { params: filters });
   },
 
@@ -266,17 +266,17 @@ export const rolesService = {
     resource: string;
     action: string;
     effect: 'allow' | 'deny';
-    conditions?: Record<string, any>;
+    conditions?: Record<string, unknown>;
     priority?: number;
   }): Promise<{
     success: boolean;
     data?: PolicyRule;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
       data?: PolicyRule;
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/policy-rules', ruleData);
   },
 
@@ -287,28 +287,28 @@ export const rolesService = {
     resource?: string;
     action?: string;
     effect?: 'allow' | 'deny';
-    conditions?: Record<string, any>;
+    conditions?: Record<string, unknown>;
     priority?: number;
   }): Promise<{
     success: boolean;
     data?: PolicyRule;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.put<{
       success: boolean;
       data?: PolicyRule;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/policy-rules/${ruleId}`, updates);
   },
 
   // Delete a policy rule
   async deletePolicyRule(ruleId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.delete<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/policy-rules/${ruleId}`);
   },
 };

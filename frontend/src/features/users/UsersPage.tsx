@@ -203,7 +203,7 @@ export const UsersPage: Component = () => {
   };
 
   const applyFilters = () => {
-    const filters: any = {};
+    const filters: Record<string, string | boolean> = {};
     
     if (filterStatus()) {
       filters.status = filterStatus();

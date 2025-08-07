@@ -1,5 +1,5 @@
 import { Router, Route, Navigate } from '@solidjs/router';
-import { Component, lazy } from 'solid-js';
+import { Component, lazy, JSX } from 'solid-js';
 import { AuthGuard } from '../contexts/AuthContext';
 import { RootProvider } from '../providers/RootProvider';
 
@@ -14,7 +14,7 @@ const UsersExample = lazy(() => import('../examples/UsersExample').then(m => ({ 
 const UIExample = lazy(() => import('../examples/UIExample').then(m => ({ default: m.UIExample })));
 
 // Layout components
-const AppLayout: Component<{ children: any }> = (props) => {
+const AppLayout: Component<{ children: JSX.Element }> = (props) => {
   return (
     <div class="min-h-screen" style={{ "background-color": "#F7F8F9" }}>
       <RootProvider>
@@ -24,7 +24,7 @@ const AppLayout: Component<{ children: any }> = (props) => {
   );
 };
 
-const AuthLayout: Component<{ children: any }> = (props) => {
+const AuthLayout: Component<{ children: JSX.Element }> = (props) => {
   return (
     <AuthGuard requireAuth={false} fallback={<Navigate href="/dashboard" />}>
       <AppLayout>
@@ -34,7 +34,7 @@ const AuthLayout: Component<{ children: any }> = (props) => {
   );
 };
 
-const DashboardLayout: Component<{ children: any }> = (props) => {
+const DashboardLayout: Component<{ children: JSX.Element }> = (props) => {
   return (
     <AuthGuard requireAuth={true} fallback={<Navigate href="/login" />}>
       <AppLayout>

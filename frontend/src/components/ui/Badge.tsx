@@ -8,7 +8,7 @@ export interface BadgeProps {
   interactive?: boolean;
   children: JSX.Element;
   class?: string;
-  [key: string]: any; // Allow any HTML attributes
+  [key: string]: unknown; // Allow any HTML attributes
 }
 
 export const Badge: Component<BadgeProps> = (props) => {

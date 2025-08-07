@@ -320,6 +320,7 @@ const stopRealtimeSimulation = () => {
       window.clearInterval(interval);
     }
     setSimulationInterval(null);
+    setSimulationInterval(null);
   }
   
   setRealtimeActive(false);
@@ -405,7 +406,11 @@ const handleKeyboardShortcuts = (event: KeyboardEvent) => {
     'r': () => {
       if (isCmd && shiftKey) {
         event.preventDefault();
-        realtimeActive() ? stopRealtimeSimulation() : startRealtimeSimulation();
+        if (realtimeActive()) {
+          stopRealtimeSimulation();
+        } else {
+          startRealtimeSimulation();
+        }
       }
     }
   };
@@ -1130,7 +1135,11 @@ const AdminSettingsPanel = () => {
                     <label style={`display: block; font-size: 14px; color: ${theme.text.secondary}; margin-bottom: 8px; font-weight: 500;`}>Real-time Updates</label>
                     <button
                       onclick={() => {
-                        realtimeActive() ? stopRealtimeSimulation() : startRealtimeSimulation();
+                        if (realtimeActive()) {
+                          stopRealtimeSimulation();
+                        } else {
+                          startRealtimeSimulation();
+                        }
                       }}
                       style={`width: 100%; padding: 12px; border: 2px solid ${realtimeActive() ? theme.status.success : theme.border.primary}; background: ${realtimeActive() ? theme.status.success : theme.bg.secondary}; color: ${realtimeActive() ? 'white' : theme.text.primary}; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s ease;`}
                     >
@@ -1346,6 +1355,7 @@ const AdminSettingsPanel = () => {
                         addNotification('System data exported successfully', 'success');
                       }, 2000);
                     }
+                    return Promise.resolve();
                   }}
                   style={`padding: 10px 20px; background: ${theme.status.info}; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;`}
                 >
@@ -2514,7 +2524,11 @@ const Dashboard = () => {
             </button>
             <button 
               onclick={() => {
-                realtimeActive() ? stopRealtimeSimulation() : startRealtimeSimulation();
+                if (realtimeActive()) {
+                  stopRealtimeSimulation();
+                } else {
+                  startRealtimeSimulation();
+                }
               }}
               style={`display: inline-flex; align-items: center; padding: 12px 20px; background: ${realtimeActive() ? '#10B981' : '#6B7280'}; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; transition: all 0.2s; position: relative;`}
             >

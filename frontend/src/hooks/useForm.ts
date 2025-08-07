@@ -43,7 +43,7 @@ export function useForm<T extends Record<string, string>>(
 
   // Initialize form state
   const initialFormState = fields.reduce((acc, field) => {
-    const fieldValue = initialValues ? (initialValues as any)[field] : '';
+    const fieldValue = initialValues ? (initialValues as Record<string, string>)[field] : '';
     acc[field] = createFieldState(fieldValue || '');
     return acc;
   }, {} as FormState<T>);
@@ -109,7 +109,7 @@ export function useForm<T extends Record<string, string>>(
     reset: (newInitialValues?: Partial<T>) => {
       const resetValues = { ...initialValues, ...newInitialValues };
       const resetState = fields.reduce((acc, field) => {
-        const fieldValue = resetValues ? (resetValues as any)[field] : '';
+        const fieldValue = resetValues ? (resetValues as Record<string, string>)[field] : '';
         acc[field] = createFieldState(fieldValue || '');
         return acc;
       }, {} as FormState<T>);

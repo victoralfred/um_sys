@@ -1,6 +1,6 @@
-import { createContext, useContext, ParentComponent } from 'solid-js';
+import { createContext, useContext, ParentComponent, Component } from 'solid-js';
 import { uiState, uiActions } from '../stores/ui';
-import type { UIState, NotificationType } from '../types/ui';
+import type { UIState, NotificationType, ModalOptions } from '../types/ui';
 
 // Create the UI context
 interface UIContextValue {
@@ -19,7 +19,7 @@ interface UIContextValue {
   notifyInfo: (title: string, message?: string, duration?: number) => string;
   
   // Modal actions
-  openModal: (component: any, props?: Record<string, any>, options?: any) => string;
+  openModal: (component: Component<Record<string, unknown>>, props?: Record<string, unknown>, options?: ModalOptions) => string;
   closeModal: (id: string) => void;
   closeTopModal: () => void;
   closeAllModals: () => void;

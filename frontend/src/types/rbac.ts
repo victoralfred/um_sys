@@ -37,7 +37,7 @@ export interface PolicyRule {
   resource: string;
   action: string;
   effect: PolicyEffect;
-  conditions: Record<string, any>;
+  conditions: Record<string, unknown>;
   priority: number;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
@@ -47,7 +47,7 @@ export interface AccessRequest {
   userId: string;
   resource: string;
   action: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface AccessResponse {

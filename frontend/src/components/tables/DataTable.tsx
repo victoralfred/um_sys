@@ -3,16 +3,16 @@ import { Button } from '../buttons/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../cards/Card';
 
-export interface TableColumn<T = any> {
+export interface TableColumn<T = Record<string, unknown>> {
   key: keyof T;
   label: string;
   sortable?: boolean;
-  render?: (value: any, row: T) => any;
+  render?: (value: unknown, row: T) => unknown;
   width?: string;
   align?: 'left' | 'center' | 'right';
 }
 
-export interface TableAction<T = any> {
+export interface TableAction<T = Record<string, unknown>> {
   label: string;
   onClick: (row: T) => void;
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -27,7 +27,7 @@ export interface PaginationInfo {
   totalPages: number;
 }
 
-export interface DataTableProps<T = any> {
+export interface DataTableProps<T = Record<string, unknown>> {
   data: T[];
   columns: TableColumn<T>[];
   loading?: boolean;
@@ -72,13 +72,13 @@ export const DataTable: Component<DataTableProps> = (props) => {
     }
   };
 
-  const handleRowSelect = (row: any) => {
+  const handleRowSelect = (row: T & { id: string }) => {
     if (!props.selectable || !props.onSelectionChange || !props.selectedRows) return;
     
-    const isSelected = props.selectedRows.some((selected: any) => selected.id === row.id);
+    const isSelected = props.selectedRows.some((selected: T & { id: string }) => selected.id === row.id);
     
     if (isSelected) {
-      props.onSelectionChange(props.selectedRows.filter((selected: any) => selected.id !== row.id));
+      props.onSelectionChange(props.selectedRows.filter((selected: T & { id: string }) => selected.id !== row.id));
     } else {
       props.onSelectionChange([...props.selectedRows, row]);
     }
@@ -236,14 +236,14 @@ export const DataTable: Component<DataTableProps> = (props) => {
                     {(row) => (
                       <tr style={{ 
                         "border-bottom": "1px solid #F1F2F4",
-                        "background-color": props.selectedRows?.some((selected: any) => selected.id === row.id) ? "#F4F8FF" : "transparent"
+                        "background-color": props.selectedRows?.some((selected: T & { id: string }) => selected.id === (row as T & { id: string }).id) ? "#F4F8FF" : "transparent"
                       }}>
                         <Show when={props.selectable}>
                           <td style={{ padding: "12px 16px" }}>
                             <input
                               type="checkbox"
-                              checked={props.selectedRows?.some((selected: any) => selected.id === row.id) || false}
-                              onChange={() => handleRowSelect(row)}
+                              checked={props.selectedRows?.some((selected: T & { id: string }) => selected.id === (row as T & { id: string }).id) || false}
+                              onChange={() => handleRowSelect(row as T & { id: string })}
                             />
                           </td>
                         </Show>

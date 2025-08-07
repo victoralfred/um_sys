@@ -1,7 +1,7 @@
 // Form validation utilities
 
-export type ValidationRule<T = any> = {
-  validate: (value: T, formData?: Record<string, any>) => boolean;
+export type ValidationRule<T = unknown> = {
+  validate: (value: T, formData?: Record<string, unknown>) => boolean;
   message: string;
 };
 
@@ -16,7 +16,7 @@ export type FieldValidation = {
 
 // Common validation rules
 export const validationRules = {
-  required: (message = 'This field is required'): ValidationRule<any> => ({
+  required: (message = 'This field is required'): ValidationRule<unknown> => ({
     validate: (value) => {
       if (typeof value === 'string') return value.trim().length > 0;
       return value !== null && value !== undefined && value !== '';
@@ -68,7 +68,7 @@ export const validationRules = {
   phoneNumber: (message = 'Please enter a valid phone number'): ValidationRule<string> => ({
     validate: (value) => {
       if (!value.trim()) return true; // Optional field
-      const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
+      const phoneRegex = /^\+?[\d\s\-()]{10,}$/;
       return phoneRegex.test(value.replace(/\s/g, ''));
     },
     message,
@@ -92,7 +92,7 @@ export class FormValidator {
     this.rules = rules;
   }
 
-  validateField(fieldName: string, value: any, formData?: Record<string, any>): ValidationResult {
+  validateField(fieldName: string, value: unknown, formData?: Record<string, unknown>): ValidationResult {
     const fieldRules = this.rules[fieldName] || [];
     const errors: string[] = [];
 
@@ -108,7 +108,7 @@ export class FormValidator {
     };
   }
 
-  validateForm(formData: Record<string, any>): Record<string, ValidationResult> {
+  validateForm(formData: Record<string, unknown>): Record<string, ValidationResult> {
     const results: Record<string, ValidationResult> = {};
 
     for (const fieldName of Object.keys(this.rules)) {
@@ -118,12 +118,12 @@ export class FormValidator {
     return results;
   }
 
-  isFormValid(formData: Record<string, any>): boolean {
+  isFormValid(formData: Record<string, unknown>): boolean {
     const results = this.validateForm(formData);
     return Object.values(results).every(result => result.isValid);
   }
 
-  getFormErrors(formData: Record<string, any>): Record<string, string[]> {
+  getFormErrors(formData: Record<string, unknown>): Record<string, string[]> {
     const results = this.validateForm(formData);
     const errors: Record<string, string[]> = {};
 
@@ -183,7 +183,7 @@ export const updateFieldState = (
   value: string,
   validator?: FormValidator,
   fieldName?: string,
-  formData?: Record<string, any>
+  formData?: Record<string, unknown>
 ) => {
   const newField = {
     ...field,

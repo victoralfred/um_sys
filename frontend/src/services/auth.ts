@@ -4,6 +4,10 @@ import type {
   RegisterRequest,
   LoginResponse,
   UserInfo,
+  AuthServiceResponse,
+  MFASetupResponse,
+  MFAVerificationResponse,
+  AuthStatusResponse,
 } from '../types/auth';
 
 export const authService = {
@@ -54,88 +58,48 @@ export const authService = {
   async resetPassword(data: {
     token: string;
     newPassword: string;
-  }): Promise<{ success: boolean; error?: any }> {
-    return httpClient.post<{ success: boolean; error?: any }>('/api/auth/reset-password', data);
+  }): Promise<AuthServiceResponse> {
+    return httpClient.post<AuthServiceResponse>('/api/auth/reset-password', data);
   },
 
   // Verify email
-  async verifyEmail(token: string): Promise<{ success: boolean; error?: any }> {
-    return httpClient.post<{ success: boolean; error?: any }>('/api/auth/verify-email', { token });
+  async verifyEmail(token: string): Promise<AuthServiceResponse> {
+    return httpClient.post<AuthServiceResponse>('/api/auth/verify-email', { token });
   },
 
   // Resend email verification
-  async resendEmailVerification(): Promise<{ success: boolean; error?: any }> {
-    return httpClient.post<{ success: boolean; error?: any }>('/api/auth/resend-email-verification');
+  async resendEmailVerification(): Promise<AuthServiceResponse> {
+    return httpClient.post<AuthServiceResponse>('/api/auth/resend-email-verification');
   },
 
   // Enable MFA
-  async enableMFA(): Promise<{
-    success: boolean;
-    data?: {
-      secret: string;
-      qrCode: string;
-      backupCodes: string[];
-    };
-    error?: any;
-  }> {
-    return httpClient.post<{
-      success: boolean;
-      data?: {
-        secret: string;
-        qrCode: string;
-        backupCodes: string[];
-      };
-      error?: any;
-    }>('/api/auth/mfa/enable');
+  async enableMFA(): Promise<MFASetupResponse> {
+    return httpClient.post<MFASetupResponse>('/api/auth/mfa/enable');
   },
 
   // Confirm MFA setup
   async confirmMFA(data: {
     token: string;
     secret: string;
-  }): Promise<{ success: boolean; error?: any }> {
-    return httpClient.post<{ success: boolean; error?: any }>('/api/auth/mfa/confirm', data);
+  }): Promise<AuthServiceResponse> {
+    return httpClient.post<AuthServiceResponse>('/api/auth/mfa/confirm', data);
   },
 
   // Disable MFA
   async disableMFA(data: {
     password: string;
     token?: string;
-  }): Promise<{ success: boolean; error?: any }> {
-    return httpClient.post<{ success: boolean; error?: any }>('/api/auth/mfa/disable', data);
+  }): Promise<AuthServiceResponse> {
+    return httpClient.post<AuthServiceResponse>('/api/auth/mfa/disable', data);
   },
 
   // Generate new MFA backup codes
-  async generateBackupCodes(password: string): Promise<{
-    success: boolean;
-    data?: { backupCodes: string[] };
-    error?: any;
-  }> {
-    return httpClient.post<{
-      success: boolean;
-      data?: { backupCodes: string[] };
-      error?: any;
-    }>('/api/auth/mfa/backup-codes', { password });
+  async generateBackupCodes(password: string): Promise<MFAVerificationResponse> {
+    return httpClient.post<MFAVerificationResponse>('/api/auth/mfa/backup-codes', { password });
   },
 
   // Check auth status
-  async checkAuthStatus(): Promise<{
-    success: boolean;
-    data?: {
-      isAuthenticated: boolean;
-      user?: UserInfo;
-      expiresAt?: string;
-    };
-    error?: any;
-  }> {
-    return httpClient.get<{
-      success: boolean;
-      data?: {
-        isAuthenticated: boolean;
-        user?: UserInfo;
-        expiresAt?: string;
-      };
-      error?: any;
-    }>('/api/auth/status');
+  async checkAuthStatus(): Promise<AuthStatusResponse> {
+    return httpClient.get<AuthStatusResponse>('/api/auth/status');
   },
 };

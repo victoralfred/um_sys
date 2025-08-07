@@ -58,6 +58,7 @@ export const RegisterPage: Component = () => {
 
     try {
       const values = formActions.getValues();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, ...registerData } = values;
 
       const result = await auth.register(registerData);

@@ -19,12 +19,12 @@ export const usersService = {
   async getUser(userId: string): Promise<{
     success: boolean;
     data?: User;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
       data?: User;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}`);
   },
 
@@ -32,12 +32,12 @@ export const usersService = {
   async createUser(userData: CreateUserRequest): Promise<{
     success: boolean;
     data?: User;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
       data?: User;
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/users', userData);
   },
 
@@ -45,34 +45,34 @@ export const usersService = {
   async updateUser(userId: string, updates: UpdateUserRequest): Promise<{
     success: boolean;
     data?: User;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.put<{
       success: boolean;
       data?: User;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}`, updates);
   },
 
   // Delete a user
   async deleteUser(userId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.delete<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}`);
   },
 
   // Bulk delete users
   async bulkDeleteUsers(userIds: string[]): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/users/bulk-delete', { userIds });
   },
 
@@ -80,12 +80,12 @@ export const usersService = {
   async updateUserStatus(userId: string, status: 'active' | 'inactive' | 'suspended' | 'locked'): Promise<{
     success: boolean;
     data?: User;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.patch<{
       success: boolean;
       data?: User;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/status`, { status });
   },
 
@@ -93,12 +93,12 @@ export const usersService = {
   async resetUserPassword(userId: string): Promise<{
     success: boolean;
     data?: { temporaryPassword: string };
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
       data?: { temporaryPassword: string };
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/reset-password`);
   },
 
@@ -106,23 +106,23 @@ export const usersService = {
   async unlockUser(userId: string): Promise<{
     success: boolean;
     data?: User;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
       data?: User;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/unlock`);
   },
 
   // Send email verification to user
   async sendEmailVerification(userId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/send-email-verification`);
   },
 
@@ -136,7 +136,7 @@ export const usersService = {
       grantedAt: string;
       expiresAt?: string;
     }>;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
@@ -147,29 +147,29 @@ export const usersService = {
         grantedAt: string;
         expiresAt?: string;
       }>;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/roles`);
   },
 
   // Assign role to user
   async assignRole(userId: string, roleId: string, expiresAt?: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/roles`, { roleId, expiresAt });
   },
 
   // Remove role from user
   async removeRole(userId: string, roleId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.delete<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/roles/${roleId}`);
   },
 
@@ -181,7 +181,7 @@ export const usersService = {
       action: string;
       description: string;
     }>;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
@@ -190,7 +190,7 @@ export const usersService = {
         action: string;
         description: string;
       }>;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/permissions`);
   },
 
@@ -217,7 +217,7 @@ export const usersService = {
         error: string;
       }>;
     };
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.upload<{
       success: boolean;
@@ -229,7 +229,7 @@ export const usersService = {
           error: string;
         }>;
       };
-      error?: any;
+      error?: { code: string; message: string; };
     }>('/api/users/import', file);
   },
 
@@ -247,7 +247,7 @@ export const usersService = {
         id: string;
         action: string;
         resource: string;
-        details: Record<string, any>;
+        details: Record<string, unknown>;
         ipAddress: string;
         userAgent: string;
         createdAt: string;
@@ -257,7 +257,7 @@ export const usersService = {
       pageSize: number;
       totalPages: number;
     };
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
@@ -266,7 +266,7 @@ export const usersService = {
           id: string;
           action: string;
           resource: string;
-          details: Record<string, any>;
+          details: Record<string, unknown>;
           ipAddress: string;
           userAgent: string;
           createdAt: string;
@@ -276,7 +276,7 @@ export const usersService = {
         pageSize: number;
         totalPages: number;
       };
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/activity`, { params: filters });
   },
 
@@ -292,7 +292,7 @@ export const usersService = {
       lastActivity: string;
       createdAt: string;
     }>;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.get<{
       success: boolean;
@@ -305,29 +305,29 @@ export const usersService = {
         lastActivity: string;
         createdAt: string;
       }>;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/sessions`);
   },
 
   // Revoke user session
   async revokeUserSession(userId: string, sessionId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.delete<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/sessions/${sessionId}`);
   },
 
   // Revoke all user sessions except current
   async revokeAllUserSessions(userId: string): Promise<{
     success: boolean;
-    error?: any;
+    error?: { code: string; message: string; };
   }> {
     return httpClient.post<{
       success: boolean;
-      error?: any;
+      error?: { code: string; message: string; };
     }>(`/api/users/${userId}/sessions/revoke-all`);
   },
 };

@@ -86,7 +86,7 @@ export const LoginPage: Component = () => {
     // Auto-submit after setting demo values
     if (typeof window !== 'undefined') {
       window.setTimeout(() => {
-        const form = document.getElementById('login-form') as HTMLFormElement;
+        const form = document.getElementById('login-form') as HTMLFormElement | null;
         form?.requestSubmit();
       }, 100);
     }

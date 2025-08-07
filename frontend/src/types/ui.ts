@@ -15,10 +15,18 @@ export interface Notification {
   createdAt: Date;
 }
 
+import type { Component, JSX } from 'solid-js';
+
+export interface ModalOptions {
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  closable?: boolean;
+  onClose?: () => void;
+}
+
 export interface Modal {
   id: string;
-  component: any; // SolidJS component
-  props?: Record<string, any>;
+  component: Component<Record<string, unknown>>; // SolidJS component
+  props?: Record<string, unknown>;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   closable?: boolean;
   onClose?: () => void;
@@ -38,12 +46,12 @@ export interface PaginationState {
   totalPages: number;
 }
 
-export interface TableState<T = any> {
+export interface TableState<T = unknown> {
   data: T[];
   loading: boolean;
   error?: string;
   pagination: PaginationState;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }

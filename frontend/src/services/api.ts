@@ -60,16 +60,16 @@ class HttpClientImpl implements HttpClient {
     let url = `${this.baseURL}${endpoint}`;
     
     // Add query parameters
-    if (params) {
-      const searchParams = new URLSearchParams();
+    if (params && typeof window !== 'undefined' && window.URLSearchParams) {
+      const searchParams = new window.URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
         searchParams.append(key, String(value));
       });
       url += `?${searchParams.toString()}`;
     }
 
-    // Build headers
-    const requestHeaders = new Headers({
+    // Build headers  
+    const requestHeaders = new (typeof window !== 'undefined' && window.Headers ? window.Headers : Headers)({
       ...this.defaultHeaders,
       ...headers,
     });
@@ -88,7 +88,7 @@ class HttpClientImpl implements HttpClient {
 
     // Add body for non-GET requests
     if (body && method !== 'GET') {
-      if (body instanceof FormData) {
+      if (typeof window !== 'undefined' && window.FormData && body instanceof window.FormData) {
         // Remove Content-Type header for FormData (browser will set it with boundary)
         requestHeaders.delete('Content-Type');
         requestInit.body = body;
@@ -110,8 +110,9 @@ class HttpClientImpl implements HttpClient {
       });
 
       // Make the request with timeout
+      const fetchFn = typeof window !== 'undefined' ? window.fetch : fetch;
       const response = await Promise.race([
-        window.fetch(url, requestInit),
+        fetchFn(url, requestInit),
         timeoutPromise,
       ]);
 
@@ -131,7 +132,7 @@ class HttpClientImpl implements HttpClient {
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
-    let data: any;
+    let data: unknown;
 
     // Parse response body
     const contentType = response.headers.get('content-type');
@@ -149,16 +150,18 @@ class HttpClientImpl implements HttpClient {
     // Handle error responses
     let errorMessage = 'An error occurred';
     let errorCode = 'UNKNOWN_ERROR';
-    let errorDetails: Record<string, any> = {};
+    let errorDetails: Record<string, unknown> = {};
 
     if (typeof data === 'object' && data !== null) {
       // API error response format
-      if (data.error) {
-        errorMessage = data.error.message || errorMessage;
-        errorCode = data.error.code || errorCode;
-        errorDetails = data.error.details || {};
-      } else if (data.message) {
-        errorMessage = data.message;
+      const errorData = data as Record<string, unknown>;
+      if (errorData.error && typeof errorData.error === 'object' && errorData.error !== null) {
+        const error = errorData.error as Record<string, unknown>;
+        errorMessage = (error.message as string) || errorMessage;
+        errorCode = (error.code as string) || errorCode;
+        errorDetails = (error.details as Record<string, unknown>) || {};
+      } else if (errorData.message && typeof errorData.message === 'string') {
+        errorMessage = errorData.message;
       }
     } else if (typeof data === 'string') {
       errorMessage = data;
@@ -196,15 +199,17 @@ class HttpClientImpl implements HttpClient {
   private handleUnauthorized() {
     // Clear stored auth data
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('umanager_access_token');
-      localStorage.removeItem('umanager_refresh_token');
-      localStorage.removeItem('umanager_expires_at');
-      localStorage.removeItem('umanager_user');
+      window.localStorage.removeItem('umanager_access_token');
+      window.localStorage.removeItem('umanager_refresh_token');
+      window.localStorage.removeItem('umanager_expires_at');
+      window.localStorage.removeItem('umanager_user');
     }
 
     // Redirect to login page or emit auth error event
     // This will be handled by the auth store
-    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new window.CustomEvent<void>('auth:unauthorized'));
+    }
   }
 
   // HTTP methods
@@ -212,15 +217,15 @@ class HttpClientImpl implements HttpClient {
     return this.request<T>(endpoint, { ...config, method: 'GET' });
   }
 
-  async post<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>(endpoint, { ...config, method: 'POST', body: data });
   }
 
-  async put<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+  async put<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>(endpoint, { ...config, method: 'PUT', body: data });
   }
 
-  async patch<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+  async patch<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>(endpoint, { ...config, method: 'PATCH', body: data });
   }
 
@@ -229,8 +234,11 @@ class HttpClientImpl implements HttpClient {
   }
 
   // File upload helper
-  async upload<T>(endpoint: string, file: File, additionalData?: Record<string, any>): Promise<T> {
-    const formData = new FormData();
+  async upload<T>(endpoint: string, file: File, additionalData?: Record<string, unknown>): Promise<T> {
+    if (typeof window === 'undefined' || !window.FormData) {
+      throw new Error('FormData not available in this environment');
+    }
+    const formData = new window.FormData();
     formData.append('file', file);
 
     if (additionalData) {
@@ -248,7 +256,8 @@ class HttpClientImpl implements HttpClient {
   // Download helper
   async download(endpoint: string, filename?: string, config?: RequestConfig): Promise<void> {
     try {
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
+      const fetchFn = typeof window !== 'undefined' ? window.fetch : fetch;
+      const response = await fetchFn(`${this.baseURL}${endpoint}`, {
         method: config?.method || 'GET',
         headers: {
           'Authorization': `Bearer ${this.getAuthToken()}`,
@@ -260,19 +269,21 @@ class HttpClientImpl implements HttpClient {
         throw new ApiError('Download failed', response.status);
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename || 'download';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      throw error;
+      if (typeof window !== 'undefined') {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || 'download';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        window.URL.revokeObjectURL(url);
+      }
+    } catch {
+      throw new ApiError('Download failed', 500);
     }
   }
 
@@ -297,7 +308,13 @@ class HttpClientImpl implements HttpClient {
 
         // Wait before retrying (exponential backoff)
         if (i < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+          await new Promise(resolve => {
+            if (typeof window !== 'undefined') {
+              window.setTimeout(resolve, delay * Math.pow(2, i));
+            } else {
+              setTimeout(resolve, delay * Math.pow(2, i));
+            }
+          });
         }
       }
     }

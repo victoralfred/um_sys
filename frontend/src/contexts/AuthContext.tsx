@@ -1,6 +1,13 @@
-import { createContext, useContext, ParentComponent } from 'solid-js';
+import { createContext, useContext, ParentComponent, JSX } from 'solid-js';
 import { authState, authActions } from '../stores/auth';
-import type { AuthState, LoginRequest, RegisterRequest } from '../types/auth';
+import type { 
+  AuthState, 
+  LoginRequest, 
+  RegisterRequest, 
+  LoginResponse, 
+  RegisterResponse, 
+  ProfileUpdateRequest 
+} from '../types/auth';
 
 // Create the auth context
 interface AuthContextValue {
@@ -8,11 +15,11 @@ interface AuthContextValue {
   state: AuthState;
   
   // Actions
-  login: (credentials: LoginRequest) => Promise<any>;
-  register: (userData: RegisterRequest) => Promise<any>;
+  login: (credentials: LoginRequest) => Promise<LoginResponse>;
+  register: (userData: RegisterRequest) => Promise<RegisterResponse>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
-  updateProfile: (updates: any) => void;
+  updateProfile: (updates: ProfileUpdateRequest) => void;
 }
 
 const AuthContext = createContext<AuthContextValue>();
@@ -46,8 +53,8 @@ export const useAuth = () => {
 
 // Auth guard component
 interface AuthGuardProps {
-  children: any;
-  fallback?: any;
+  children: JSX.Element;
+  fallback?: JSX.Element;
   requireAuth?: boolean;
 }
 

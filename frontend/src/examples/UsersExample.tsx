@@ -6,6 +6,7 @@ import { Button } from '../components/buttons/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/cards/Card';
+import type { User } from '../types/user';
 
 // Example component demonstrating user management
 export const UsersExample: Component = () => {
@@ -31,12 +32,12 @@ export const UsersExample: Component = () => {
     // users.showCreateModal();
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: User) => {
     ui.notifyInfo('Edit User', `This would edit ${user.username}`);
     // users.showEditModal(user);
   };
 
-  const handleDeleteUser = (user: any) => {
+  const handleDeleteUser = (user: User) => {
     ui.notifyInfo('Delete User', `This would delete ${user.username}`);
     // users.showDeleteModal(user);
   };
