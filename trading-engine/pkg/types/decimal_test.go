@@ -39,9 +39,9 @@ func TestDecimalArithmetic(t *testing.T) {
 	b, _ := NewDecimal("2.5")
 
 	tests := []struct {
-		name     string
+		name      string
 		operation func() Decimal
-		want     string
+		want      string
 	}{
 		{"addition", func() Decimal { return a.Add(b) }, "13"},
 		{"subtraction", func() Decimal { return a.Sub(b) }, "8"},
@@ -61,8 +61,8 @@ func TestDecimalArithmetic(t *testing.T) {
 
 func TestDecimalComparison(t *testing.T) {
 	tests := []struct {
-		name   string
-		a, b   string
+		name    string
+		a, b    string
 		wantCmp int
 	}{
 		{"equal", "10.5", "10.5", 0},
@@ -85,20 +85,20 @@ func TestDecimalComparison(t *testing.T) {
 
 func TestDecimalJSON(t *testing.T) {
 	original, _ := NewDecimal("123.456")
-	
+
 	// Marshal
 	data, err := json.Marshal(original)
 	if err != nil {
 		t.Errorf("Marshal error: %v", err)
 	}
-	
+
 	// Unmarshal
 	var restored Decimal
 	err = json.Unmarshal(data, &restored)
 	if err != nil {
 		t.Errorf("Unmarshal error: %v", err)
 	}
-	
+
 	if original.Cmp(restored) != 0 {
 		t.Errorf("JSON roundtrip failed: %v != %v", original.String(), restored.String())
 	}
@@ -108,13 +108,13 @@ func TestDecimalPrecision(t *testing.T) {
 	// Test that we maintain precision in financial calculations
 	price, _ := NewDecimal("1234.56789")
 	quantity, _ := NewDecimal("100.123456")
-	
+
 	total := price.Mul(quantity)
-	
+
 	// Check that we get a reasonable approximation
 	expectedFloat := 1234.56789 * 100.123456
 	actualFloat := total.Float64()
-	
+
 	if diff := actualFloat - expectedFloat; diff > 0.01 || diff < -0.01 {
 		t.Errorf("Precision test failed: got %f, expected approximately %f", actualFloat, expectedFloat)
 	}
@@ -123,13 +123,13 @@ func TestDecimalPrecision(t *testing.T) {
 func BenchmarkDecimalArithmetic(b *testing.B) {
 	a, _ := NewDecimal("1234.5678")
 	c, _ := NewDecimal("9876.5432")
-	
+
 	b.Run("Add", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = a.Add(c)
 		}
 	})
-	
+
 	b.Run("Mul", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = a.Mul(c)

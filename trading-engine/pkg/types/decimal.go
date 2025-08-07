@@ -148,12 +148,12 @@ func (d *Decimal) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
-	
+
 	decimal, err := NewDecimal(s)
 	if err != nil {
 		return err
 	}
-	
+
 	*d = decimal
 	return nil
 }
@@ -169,7 +169,7 @@ func (d *Decimal) Scan(value interface{}) error {
 		*d = Zero()
 		return nil
 	}
-	
+
 	var s string
 	switch v := value.(type) {
 	case string:
@@ -183,12 +183,12 @@ func (d *Decimal) Scan(value interface{}) error {
 	default:
 		return fmt.Errorf("cannot scan %T into Decimal", value)
 	}
-	
+
 	decimal, err := NewDecimal(strings.TrimSpace(s))
 	if err != nil {
 		return err
 	}
-	
+
 	*d = decimal
 	return nil
 }

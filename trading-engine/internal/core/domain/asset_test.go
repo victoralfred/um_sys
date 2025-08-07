@@ -280,7 +280,7 @@ func TestAssetValidate(t *testing.T) {
 func TestAssetIsValidQuantity(t *testing.T) {
 	minQty, _ := types.NewDecimal("1")
 	maxQty, _ := types.NewDecimal("1000")
-	
+
 	asset := Asset{
 		MinQuantity: minQty,
 		MaxQuantity: maxQty,
@@ -333,7 +333,7 @@ func TestAssetRoundPrice(t *testing.T) {
 			if tt.name == "no tick size" {
 				testAsset.TickSize = types.Zero()
 			}
-			
+
 			got := testAsset.RoundPrice(price)
 			if got.String() != tt.want {
 				t.Errorf("Asset.RoundPrice() = %v, want %v", got.String(), tt.want)
