@@ -912,7 +912,7 @@ jobs:
         with:
           status: ${{ job.status }}
           channel: '#ci-cd'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook_url: ${{ env.SLACK_URL }}${{ secrets.SLACK_TOKEN }}
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
           text: |
             CI/CD Pipeline completed for ${{ github.repository }}
