@@ -42,7 +42,7 @@ func (l LogLevel) String() string {
 // LoggerConfig contains configuration for the structured logger
 type LoggerConfig struct {
 	Level           LogLevel `json:"level"`
-	Format          string   `json:"format"`           // "json" or "text"
+	Format          string   `json:"format"` // "json" or "text"
 	EnableColors    bool     `json:"enable_colors"`
 	TimestampFormat string   `json:"timestamp_format"`
 	AddSource       bool     `json:"add_source"`
@@ -89,7 +89,7 @@ type RiskLogger struct {
 func NewRiskLogger(config LoggerConfig) *RiskLogger {
 	// Create handler based on configuration
 	var handler slog.Handler
-	
+
 	opts := &slog.HandlerOptions{
 		Level:     slog.Level(config.Level),
 		AddSource: config.AddSource,
@@ -103,11 +103,11 @@ func NewRiskLogger(config LoggerConfig) *RiskLogger {
 
 	// Wrap with context handler to add service metadata
 	contextHandler := NewContextHandler(handler, map[string]interface{}{
-		"service":    config.ServiceName,
-		"version":    config.ServiceVersion,
-		"component":  config.Component,
-		"env":        config.Environment,
-		"timestamp":  time.Now().Format(config.TimestampFormat),
+		"service":   config.ServiceName,
+		"version":   config.ServiceVersion,
+		"component": config.Component,
+		"env":       config.Environment,
+		"timestamp": time.Now().Format(config.TimestampFormat),
 	})
 
 	logger := slog.New(contextHandler)
@@ -199,13 +199,13 @@ func (rl *RiskLogger) ErrorContext(ctx context.Context, msg string, attrs ...slo
 // Critical logs critical messages for system-threatening issues
 func (rl *RiskLogger) Critical(msg string, attrs ...slog.Attr) {
 	// Map to ERROR level since slog doesn't have CRITICAL
-	rl.logger.LogAttrs(context.Background(), slog.LevelError, msg, 
+	rl.logger.LogAttrs(context.Background(), slog.LevelError, msg,
 		append(attrs, slog.String("severity", "CRITICAL"))...)
 }
 
 // CriticalContext logs critical messages with context
 func (rl *RiskLogger) CriticalContext(ctx context.Context, msg string, attrs ...slog.Attr) {
-	rl.logger.LogAttrs(ctx, slog.LevelError, msg, 
+	rl.logger.LogAttrs(ctx, slog.LevelError, msg,
 		append(attrs, slog.String("severity", "CRITICAL"))...)
 }
 
@@ -249,10 +249,10 @@ func (rl *RiskLogger) LogError(ctx context.Context, err *RiskError) {
 
 	// Add retry information (always include retryable status)
 	attrs = append(attrs, slog.Bool("retryable", err.IsTemporary()))
-	
+
 	// Add retry configuration if available
 	if err.RetryConfig != nil {
-		attrs = append(attrs, 
+		attrs = append(attrs,
 			slog.Int("max_retry_attempts", err.RetryConfig.MaxAttempts),
 			slog.Duration("base_backoff", err.RetryConfig.BackoffDelay),
 		)
@@ -287,7 +287,7 @@ func (rl *RiskLogger) LogCalculationStart(ctx context.Context, calculationType, 
 }
 
 // LogCalculationComplete logs the completion of a risk calculation with performance metrics
-func (rl *RiskLogger) LogCalculationComplete(ctx context.Context, calculationType, method string, 
+func (rl *RiskLogger) LogCalculationComplete(ctx context.Context, calculationType, method string,
 	duration time.Duration, success bool, result interface{}) {
 	attrs := []slog.Attr{
 		slog.String("calculation_type", calculationType),
@@ -335,13 +335,13 @@ func (rl *RiskLogger) LogSystemMetrics(ctx context.Context, metrics SystemMetric
 
 // SystemMetrics contains system performance metrics
 type SystemMetrics struct {
-	GoroutineCount          int           `json:"goroutine_count"`
-	MemoryAllocBytes        uint64        `json:"memory_alloc_bytes"`
-	MemorySysBytes          uint64        `json:"memory_sys_bytes"`
-	GCCycles                uint64        `json:"gc_cycles"`
-	LastGCPause             time.Duration `json:"last_gc_pause"`
-	ConcurrentCalculations  int           `json:"concurrent_calculations"`
-	CPUUsagePercent         float64       `json:"cpu_usage_percent"`
+	GoroutineCount         int           `json:"goroutine_count"`
+	MemoryAllocBytes       uint64        `json:"memory_alloc_bytes"`
+	MemorySysBytes         uint64        `json:"memory_sys_bytes"`
+	GCCycles               uint64        `json:"gc_cycles"`
+	LastGCPause            time.Duration `json:"last_gc_pause"`
+	ConcurrentCalculations int           `json:"concurrent_calculations"`
+	CPUUsagePercent        float64       `json:"cpu_usage_percent"`
 }
 
 // GetCurrentSystemMetrics collects current system performance metrics
@@ -355,7 +355,7 @@ func GetCurrentSystemMetrics() SystemMetrics {
 		MemorySysBytes:   memStats.Sys,
 		GCCycles:         uint64(memStats.NumGC),
 		LastGCPause:      time.Duration(memStats.PauseNs[(memStats.NumGC+255)%256]),
-		// Note: ConcurrentCalculations and CPUUsagePercent would be populated 
+		// Note: ConcurrentCalculations and CPUUsagePercent would be populated
 		// by application-specific monitoring
 	}
 }

@@ -19,11 +19,11 @@ const (
 	ErrMissingRequiredField ErrorCode = "MISSING_REQUIRED_FIELD"
 
 	// Calculation errors
-	ErrCalculationFailed   ErrorCode = "CALCULATION_FAILED"
+	ErrCalculationFailed    ErrorCode = "CALCULATION_FAILED"
 	ErrNumericalInstability ErrorCode = "NUMERICAL_INSTABILITY"
-	ErrDivisionByZero      ErrorCode = "DIVISION_BY_ZERO"
-	ErrOverflow            ErrorCode = "OVERFLOW"
-	ErrUnderflow           ErrorCode = "UNDERFLOW"
+	ErrDivisionByZero       ErrorCode = "DIVISION_BY_ZERO"
+	ErrOverflow             ErrorCode = "OVERFLOW"
+	ErrUnderflow            ErrorCode = "UNDERFLOW"
 
 	// Configuration errors
 	ErrInvalidConfig        ErrorCode = "INVALID_CONFIG"
@@ -31,9 +31,9 @@ const (
 	ErrConfigurationMissing ErrorCode = "CONFIGURATION_MISSING"
 
 	// System errors
-	ErrTimeout         ErrorCode = "TIMEOUT"
-	ErrSystemOverload  ErrorCode = "SYSTEM_OVERLOAD"
-	ErrResourceLimited ErrorCode = "RESOURCE_LIMITED"
+	ErrTimeout          ErrorCode = "TIMEOUT"
+	ErrSystemOverload   ErrorCode = "SYSTEM_OVERLOAD"
+	ErrResourceLimited  ErrorCode = "RESOURCE_LIMITED"
 	ErrConcurrencyLimit ErrorCode = "CONCURRENCY_LIMIT"
 
 	// External dependency errors
@@ -43,7 +43,7 @@ const (
 	ErrServiceUnavailable ErrorCode = "SERVICE_UNAVAILABLE"
 
 	// Business logic errors
-	ErrRiskLimitExceeded    ErrorCode = "RISK_LIMIT_EXCEEDED"
+	ErrRiskLimitExceeded     ErrorCode = "RISK_LIMIT_EXCEEDED"
 	ErrInvalidRiskParameters ErrorCode = "INVALID_RISK_PARAMETERS"
 	ErrModelValidationFailed ErrorCode = "MODEL_VALIDATION_FAILED"
 )
@@ -52,10 +52,10 @@ const (
 type ErrorSeverity string
 
 const (
-	SeverityLow      ErrorSeverity = "LOW"       // Non-critical, informational
-	SeverityMedium   ErrorSeverity = "MEDIUM"    // Important but recoverable
-	SeverityHigh     ErrorSeverity = "HIGH"      // Critical, requires attention
-	SeverityCritical ErrorSeverity = "CRITICAL"  // System-threatening, immediate action required
+	SeverityLow      ErrorSeverity = "LOW"      // Non-critical, informational
+	SeverityMedium   ErrorSeverity = "MEDIUM"   // Important but recoverable
+	SeverityHigh     ErrorSeverity = "HIGH"     // Critical, requires attention
+	SeverityCritical ErrorSeverity = "CRITICAL" // System-threatening, immediate action required
 )
 
 // ErrorCategory groups related error types
@@ -86,8 +86,8 @@ type RiskError struct {
 
 // ErrorDetails contains specific information about the error
 type ErrorDetails struct {
-	Operation    string                 `json:"operation"`              // Which operation failed
-	InputData    map[string]interface{} `json:"input_data,omitempty"`   // Input parameters (sanitized)
+	Operation    string                 `json:"operation"`               // Which operation failed
+	InputData    map[string]interface{} `json:"input_data,omitempty"`    // Input parameters (sanitized)
 	ExpectedData map[string]interface{} `json:"expected_data,omitempty"` // What was expected
 	ActualData   map[string]interface{} `json:"actual_data,omitempty"`   // What was actually received
 	Constraints  map[string]interface{} `json:"constraints,omitempty"`   // Violated constraints
@@ -107,11 +107,11 @@ type ErrorContext struct {
 
 // RetryConfig specifies retry behavior for recoverable errors
 type RetryConfig struct {
-	MaxAttempts   int           `json:"max_attempts"`
-	BackoffDelay  time.Duration `json:"backoff_delay"`
-	MaxBackoff    time.Duration `json:"max_backoff"`
-	ExponentialBase float64     `json:"exponential_base"`
-	Jitter        bool          `json:"jitter"`
+	MaxAttempts     int           `json:"max_attempts"`
+	BackoffDelay    time.Duration `json:"backoff_delay"`
+	MaxBackoff      time.Duration `json:"max_backoff"`
+	ExponentialBase float64       `json:"exponential_base"`
+	Jitter          bool          `json:"jitter"`
 }
 
 // NewRiskError creates a new RiskError with proper initialization
@@ -134,7 +134,7 @@ func NewRiskError(code ErrorCode, message string, operation string) *RiskError {
 
 // Error implements the error interface
 func (re *RiskError) Error() string {
-	return fmt.Sprintf("[%s] %s: %s (operation: %s)", 
+	return fmt.Sprintf("[%s] %s: %s (operation: %s)",
 		re.Severity, re.Code, re.Message, re.Details.Operation)
 }
 
@@ -195,9 +195,9 @@ func (re *RiskError) WithCause(cause error) *RiskError {
 // IsTemporary indicates if the error condition is temporary and can be retried
 func (re *RiskError) IsTemporary() bool {
 	switch re.Code {
-	case ErrTimeout, ErrSystemOverload, ErrResourceLimited, 
-		 ErrDatabaseConnection, ErrCacheUnavailable, 
-		 ErrNetworkFailure, ErrServiceUnavailable:
+	case ErrTimeout, ErrSystemOverload, ErrResourceLimited,
+		ErrDatabaseConnection, ErrCacheUnavailable,
+		ErrNetworkFailure, ErrServiceUnavailable:
 		return true
 	default:
 		return false
@@ -214,11 +214,11 @@ func (re *RiskError) ShouldRetry(attemptCount int) bool {
 	if !re.IsTemporary() {
 		return false
 	}
-	
+
 	if re.RetryConfig == nil {
 		return false
 	}
-	
+
 	return attemptCount < re.RetryConfig.MaxAttempts
 }
 
@@ -227,23 +227,23 @@ func (re *RiskError) GetRetryDelay(attemptCount int) time.Duration {
 	if re.RetryConfig == nil {
 		return 0
 	}
-	
+
 	// Exponential backoff with jitter
 	delay := re.RetryConfig.BackoffDelay
 	for i := 0; i < attemptCount; i++ {
 		delay = time.Duration(float64(delay) * re.RetryConfig.ExponentialBase)
 	}
-	
+
 	if delay > re.RetryConfig.MaxBackoff {
 		delay = re.RetryConfig.MaxBackoff
 	}
-	
+
 	if re.RetryConfig.Jitter {
 		// Add up to 25% jitter to prevent thundering herd
 		jitterRange := delay / 4
 		delay += time.Duration(time.Now().UnixNano() % int64(jitterRange))
 	}
-	
+
 	return delay
 }
 
@@ -254,10 +254,10 @@ func determineSeverity(code ErrorCode) ErrorSeverity {
 	case ErrCorruptedData, ErrSystemOverload, ErrConcurrencyLimit:
 		return SeverityCritical
 	case ErrCalculationFailed, ErrNumericalInstability, ErrTimeout,
-		 ErrRiskLimitExceeded, ErrModelValidationFailed:
+		ErrRiskLimitExceeded, ErrModelValidationFailed:
 		return SeverityHigh
 	case ErrInvalidConfig, ErrUnsupportedMethod, ErrDatabaseConnection,
-		 ErrServiceUnavailable:
+		ErrServiceUnavailable:
 		return SeverityMedium
 	default:
 		return SeverityLow
@@ -267,17 +267,17 @@ func determineSeverity(code ErrorCode) ErrorSeverity {
 func determineCategory(code ErrorCode) ErrorCategory {
 	switch code {
 	case ErrInsufficientData, ErrInvalidConfidence, ErrInvalidPortfolio,
-		 ErrCorruptedData, ErrMissingRequiredField:
+		ErrCorruptedData, ErrMissingRequiredField:
 		return CategoryValidation
 	case ErrCalculationFailed, ErrNumericalInstability, ErrDivisionByZero,
-		 ErrOverflow, ErrUnderflow:
+		ErrOverflow, ErrUnderflow:
 		return CategoryCalculation
 	case ErrInvalidConfig, ErrUnsupportedMethod, ErrConfigurationMissing:
 		return CategoryConfiguration
 	case ErrTimeout, ErrSystemOverload, ErrResourceLimited, ErrConcurrencyLimit:
 		return CategorySystem
 	case ErrDatabaseConnection, ErrCacheUnavailable, ErrNetworkFailure,
-		 ErrServiceUnavailable:
+		ErrServiceUnavailable:
 		return CategoryDependency
 	case ErrRiskLimitExceeded, ErrInvalidRiskParameters, ErrModelValidationFailed:
 		return CategoryBusiness
@@ -321,7 +321,7 @@ func determineRetryConfig(code ErrorCode) *RetryConfig {
 
 // NewInsufficientDataError creates an error for insufficient historical data
 func NewInsufficientDataError(operation string, required, provided int) *RiskError {
-	return NewRiskError(ErrInsufficientData, 
+	return NewRiskError(ErrInsufficientData,
 		fmt.Sprintf("insufficient historical data for %s", operation), operation).
 		WithExpected("min_observations", required).
 		WithDetails("provided_observations", provided).

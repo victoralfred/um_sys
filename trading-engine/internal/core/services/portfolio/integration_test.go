@@ -21,7 +21,7 @@ func TestPortfolioExecutionIntegration(t *testing.T) {
 	portfolioRepo := NewMemoryRepository()
 	portfolioService := NewService(portfolioRepo, nil, nil, DefaultServiceConfig())
 	executionService := execution.NewOptimizedExecutionService(nil, nil)
-	
+
 	// Start execution service
 	if err := executionService.Start(ctx); err != nil {
 		t.Fatalf("Failed to start execution service: %v", err)
@@ -148,7 +148,7 @@ func testCashBalanceUpdates(t *testing.T, ctx context.Context, portfolioService 
 	integration.orderMutex.Lock()
 	integration.orderToPortfolio["cash-test-order"] = portfolioID
 	integration.orderMutex.Unlock()
-	
+
 	// Process the fill
 	if err := integration.OnOrderFilled(ctx, "cash-test-order", fill); err != nil {
 		t.Fatalf("Failed to process order fill: %v", err)
@@ -164,9 +164,9 @@ func testCashBalanceUpdates(t *testing.T, ctx context.Context, portfolioService 
 	}
 
 	// Calculate expected balance change
-	orderValue := fill.Quantity.Mul(fill.Price)          // 50 * 300 = 15000
-	totalCost := orderValue.Add(fill.Commission)         // 15000 + 5 = 15005
-	expectedBalance := initialBalance.Sub(totalCost)     // Should decrease by 15005
+	orderValue := fill.Quantity.Mul(fill.Price)      // 50 * 300 = 15000
+	totalCost := orderValue.Add(fill.Commission)     // 15000 + 5 = 15005
+	expectedBalance := initialBalance.Sub(totalCost) // Should decrease by 15005
 
 	if newBalance.Cmp(expectedBalance) != 0 {
 		t.Errorf("Expected balance %v, got %v", expectedBalance, newBalance)
@@ -177,7 +177,7 @@ func testCashBalanceUpdates(t *testing.T, ctx context.Context, portfolioService 
 
 func testPositionManagement(t *testing.T, ctx context.Context, portfolioService *Service, integration *ExecutionIntegration, portfolioID string) {
 	symbol := "GOOGL"
-	
+
 	// Create a buy fill
 	buyFill := &ports.OrderFill{
 		OrderID:     "position-test-buy",
@@ -195,7 +195,7 @@ func testPositionManagement(t *testing.T, ctx context.Context, portfolioService 
 	integration.orderMutex.Lock()
 	integration.orderToPortfolio["position-test-buy"] = portfolioID
 	integration.orderMutex.Unlock()
-	
+
 	// Process the buy fill
 	if err := integration.OnOrderFilled(ctx, "position-test-buy", buyFill); err != nil {
 		t.Fatalf("Failed to process buy fill: %v", err)
@@ -235,7 +235,7 @@ func testPositionManagement(t *testing.T, ctx context.Context, portfolioService 
 	integration.orderMutex.Lock()
 	integration.orderToPortfolio["position-test-sell"] = portfolioID
 	integration.orderMutex.Unlock()
-	
+
 	// Process the sell fill
 	if err := integration.OnOrderFilled(ctx, "position-test-sell", sellFill); err != nil {
 		t.Fatalf("Failed to process sell fill: %v", err)
@@ -274,7 +274,7 @@ func testRiskValidation(t *testing.T, ctx context.Context, portfolioService *Ser
 
 	// Test insufficient cash scenario
 	expensiveOrder := createTestOrder("risk-test-2", "EXPENSIVE", domain.OrderSideBuy, domain.OrderTypeMarket, 1000, 500.0)
-	
+
 	err = portfolioService.ValidateOrder(ctx, portfolioID, expensiveOrder)
 	if err == nil {
 		t.Error("Expected validation to fail for insufficient cash")
@@ -327,11 +327,11 @@ func testMetricsCalculation(t *testing.T, ctx context.Context, portfolioService 
 func createTestOrder(id, symbol string, side domain.OrderSide, orderType domain.OrderType, quantity, price float64) *domain.Order {
 	qty := types.NewDecimalFromFloat(quantity)
 	prc := types.NewDecimalFromFloat(price)
-	
+
 	minQty, _ := types.NewDecimal("0.01")
 	maxQty, _ := types.NewDecimal("1000000")
 	tickSize, _ := types.NewDecimal("0.01")
-	
+
 	asset := &domain.Asset{
 		Symbol:      symbol,
 		Name:        symbol + " Stock",
@@ -344,15 +344,15 @@ func createTestOrder(id, symbol string, side domain.OrderSide, orderType domain.
 		TickSize:    tickSize,
 		IsActive:    true,
 	}
-	
+
 	return &domain.Order{
-		ID:       id,
-		Asset:    asset,
-		Type:     orderType,
-		Side:     side,
-		Status:   domain.OrderStatusPending,
-		Quantity: qty,
-		Price:    prc,
+		ID:          id,
+		Asset:       asset,
+		Type:        orderType,
+		Side:        side,
+		Status:      domain.OrderStatusPending,
+		Quantity:    qty,
+		Price:       prc,
 		TimeInForce: domain.TimeInForceGTC,
 	}
 }
@@ -366,7 +366,7 @@ func TestPortfolioEnabledExecutionService(t *testing.T) {
 	portfolioRepo := NewMemoryRepository()
 	portfolioService := NewService(portfolioRepo, nil, nil, DefaultServiceConfig())
 	executionService := execution.NewOptimizedExecutionService(nil, nil)
-	
+
 	if err := executionService.Start(ctx); err != nil {
 		t.Fatalf("Failed to start execution service: %v", err)
 	}
@@ -512,10 +512,10 @@ func testRepositoryPositionManagement(t *testing.T, ctx context.Context, repo *M
 	// Create position
 	asset := &domain.Asset{Symbol: "AAPL"}
 	position := &domain.Position{
-		ID:        "pos-1",
-		Asset:     asset,
-		Status:    domain.PositionStatusOpen,
-		Quantity:  types.NewDecimalFromFloat(100),
+		ID:       "pos-1",
+		Asset:    asset,
+		Status:   domain.PositionStatusOpen,
+		Quantity: types.NewDecimalFromFloat(100),
 		OpenedAt: time.Now(),
 	}
 
@@ -596,14 +596,14 @@ func testRepositoryFilteringAndSorting(t *testing.T, ctx context.Context, repo *
 	for i := 0; i < 10; i++ {
 		capital := types.NewDecimalFromFloat(float64(1000 * (i + 1)))
 		portfolio, _ := domain.NewPortfolio(fmt.Sprintf("filter-test-%d", i), fmt.Sprintf("Portfolio %d", i), capital)
-		
+
 		// Set different statuses
 		if i%2 == 0 {
 			portfolio.Status = domain.PortfolioStatusActive
 		} else {
 			portfolio.Status = domain.PortfolioStatusSuspended
 		}
-		
+
 		repo.Save(ctx, portfolio)
 		time.Sleep(time.Millisecond) // Ensure different creation times
 	}
@@ -612,7 +612,7 @@ func testRepositoryFilteringAndSorting(t *testing.T, ctx context.Context, repo *
 	activeFilter := &ports.PortfolioFilter{
 		Status: func() *domain.PortfolioStatus { s := domain.PortfolioStatusActive; return &s }(),
 	}
-	
+
 	activePortfolios, err := repo.FindAll(ctx, activeFilter)
 	if err != nil {
 		t.Fatalf("Failed to filter by status: %v", err)

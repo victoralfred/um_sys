@@ -10,40 +10,39 @@ import (
 	"github.com/trading-engine/internal/core/ports"
 )
 
-
 // ExecutionIntegration provides integration between execution engine and portfolio management
 type ExecutionIntegration struct {
 	portfolioManager ports.PortfolioManager
 	executionService ExecutionService
-	
+
 	// Order tracking
 	orderToPortfolio map[string]string // orderID -> portfolioID
 	orderMutex       sync.RWMutex
-	
+
 	// Event channels
-	executionChan    chan *ports.ExecutionResult
-	fillChan         chan *ports.OrderFill
-	stopChan         chan struct{}
-	
+	executionChan chan *ports.ExecutionResult
+	fillChan      chan *ports.OrderFill
+	stopChan      chan struct{}
+
 	// Configuration
 	config IntegrationConfig
 }
 
 // IntegrationConfig contains configuration for the execution integration
 type IntegrationConfig struct {
-	BufferSize           int  `json:"buffer_size"`
+	BufferSize            int  `json:"buffer_size"`
 	EnableAsyncProcessing bool `json:"enable_async_processing"`
-	LogExecutions        bool `json:"log_executions"`
-	ValidateOrders       bool `json:"validate_orders"`
+	LogExecutions         bool `json:"log_executions"`
+	ValidateOrders        bool `json:"validate_orders"`
 }
 
 // DefaultIntegrationConfig returns default configuration
 func DefaultIntegrationConfig() IntegrationConfig {
 	return IntegrationConfig{
-		BufferSize:           1000,
+		BufferSize:            1000,
 		EnableAsyncProcessing: true,
-		LogExecutions:        true,
-		ValidateOrders:       true,
+		LogExecutions:         true,
+		ValidateOrders:        true,
 	}
 }
 
@@ -54,12 +53,12 @@ func NewExecutionIntegration(
 	config IntegrationConfig,
 ) *ExecutionIntegration {
 	return &ExecutionIntegration{
-		portfolioManager:  portfolioManager,
-		executionService:  executionService,
-		orderToPortfolio:  make(map[string]string),
-		executionChan:     make(chan *ports.ExecutionResult, config.BufferSize),
-		fillChan:          make(chan *ports.OrderFill, config.BufferSize),
-		stopChan:          make(chan struct{}),
+		portfolioManager: portfolioManager,
+		executionService: executionService,
+		orderToPortfolio: make(map[string]string),
+		executionChan:    make(chan *ports.ExecutionResult, config.BufferSize),
+		fillChan:         make(chan *ports.OrderFill, config.BufferSize),
+		stopChan:         make(chan struct{}),
 		config:           config,
 	}
 }
@@ -70,22 +69,22 @@ func (ei *ExecutionIntegration) Start(ctx context.Context) error {
 		go ei.processExecutions(ctx)
 		go ei.processFills(ctx)
 	}
-	
+
 	if ei.config.LogExecutions {
 		log.Println("Execution integration started")
 	}
-	
+
 	return nil
 }
 
 // Stop shuts down the integration service
 func (ei *ExecutionIntegration) Stop() error {
 	close(ei.stopChan)
-	
+
 	if ei.config.LogExecutions {
 		log.Println("Execution integration stopped")
 	}
-	
+
 	return nil
 }
 
@@ -97,12 +96,12 @@ func (ei *ExecutionIntegration) SubmitOrderWithPortfolio(ctx context.Context, po
 			return nil, fmt.Errorf("portfolio validation failed: %w", err)
 		}
 	}
-	
+
 	// Track order to portfolio mapping
 	ei.orderMutex.Lock()
 	ei.orderToPortfolio[order.ID] = portfolioID
 	ei.orderMutex.Unlock()
-	
+
 	// Submit order to execution service
 	result, err := ei.executionService.SubmitOrder(ctx, order)
 	if err != nil {
@@ -112,12 +111,12 @@ func (ei *ExecutionIntegration) SubmitOrderWithPortfolio(ctx context.Context, po
 		ei.orderMutex.Unlock()
 		return nil, err
 	}
-	
+
 	// Set portfolio ID in result for downstream processing
 	if result != nil {
 		result.PortfolioID = portfolioID
 	}
-	
+
 	// Process execution synchronously or asynchronously
 	if ei.config.EnableAsyncProcessing {
 		select {
@@ -137,7 +136,7 @@ func (ei *ExecutionIntegration) SubmitOrderWithPortfolio(ctx context.Context, po
 			}
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -147,15 +146,15 @@ func (ei *ExecutionIntegration) OnOrderFilled(ctx context.Context, orderID strin
 	ei.orderMutex.RLock()
 	portfolioID, exists := ei.orderToPortfolio[orderID]
 	ei.orderMutex.RUnlock()
-	
+
 	if !exists {
 		return fmt.Errorf("portfolio not found for order %s", orderID)
 	}
-	
+
 	// Set portfolio ID in fill
 	fill.PortfolioID = portfolioID
 	fill.OrderID = orderID
-	
+
 	// Process fill synchronously or asynchronously
 	if ei.config.EnableAsyncProcessing {
 		select {
@@ -175,7 +174,7 @@ func (ei *ExecutionIntegration) OnOrderFilled(ctx context.Context, orderID strin
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -191,7 +190,7 @@ func (ei *ExecutionIntegration) OnOrderCompleted(orderID string) {
 func (ei *ExecutionIntegration) GetPortfolioForOrder(orderID string) (string, bool) {
 	ei.orderMutex.RLock()
 	defer ei.orderMutex.RUnlock()
-	
+
 	portfolioID, exists := ei.orderToPortfolio[orderID]
 	return portfolioID, exists
 }
@@ -200,14 +199,14 @@ func (ei *ExecutionIntegration) GetPortfolioForOrder(orderID string) (string, bo
 func (ei *ExecutionIntegration) GetTrackedOrders(portfolioID string) []string {
 	ei.orderMutex.RLock()
 	defer ei.orderMutex.RUnlock()
-	
+
 	var orders []string
 	for orderID, pID := range ei.orderToPortfolio {
 		if pID == portfolioID {
 			orders = append(orders, orderID)
 		}
 	}
-	
+
 	return orders
 }
 
@@ -253,8 +252,8 @@ func (ei *ExecutionIntegration) processFills(ctx context.Context) {
 
 // PortfolioEnabledExecutionService wraps an execution service to automatically integrate with portfolio management
 type PortfolioEnabledExecutionService struct {
-	wrapped     ExecutionService
-	integration *ExecutionIntegration
+	wrapped          ExecutionService
+	integration      *ExecutionIntegration
 	defaultPortfolio string
 }
 
@@ -309,7 +308,7 @@ func (pes *PortfolioEnabledExecutionService) Start(ctx context.Context) error {
 	return pes.integration.Start(ctx)
 }
 
-// Stop delegates to the wrapped service and stops integration  
+// Stop delegates to the wrapped service and stops integration
 func (pes *PortfolioEnabledExecutionService) Stop(ctx context.Context) error {
 	pes.integration.Stop()
 	return pes.wrapped.Stop(ctx)

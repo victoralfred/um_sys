@@ -15,7 +15,7 @@ import (
 type MemoryRepository struct {
 	portfolios map[string]*domain.Portfolio
 	positions  map[string]map[string]*domain.Position // portfolioID -> positionID -> position
-	snapshots  map[string][]*ports.PortfolioSnapshot   // portfolioID -> snapshots
+	snapshots  map[string][]*ports.PortfolioSnapshot  // portfolioID -> snapshots
 	mutex      sync.RWMutex
 }
 
@@ -353,7 +353,7 @@ func (r *MemoryRepository) GetPortfolioCount() int {
 func (r *MemoryRepository) Clear() {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	
+
 	r.portfolios = make(map[string]*domain.Portfolio)
 	r.positions = make(map[string]map[string]*domain.Position)
 	r.snapshots = make(map[string][]*ports.PortfolioSnapshot)

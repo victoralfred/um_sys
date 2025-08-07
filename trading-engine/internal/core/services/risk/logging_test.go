@@ -25,22 +25,22 @@ func TestRiskLogger_Creation(t *testing.T) {
 		{
 			name: "Debug configuration",
 			config: LoggerConfig{
-				Level:      LogLevelDebug,
-				Format:     "json",
-				Component:  "test-component",
-				AddSource:  true,
+				Level:     LogLevelDebug,
+				Format:    "json",
+				Component: "test-component",
+				AddSource: true,
 			},
 			expected: LogLevelDebug,
 		},
 		{
 			name: "Production configuration",
 			config: LoggerConfig{
-				Level:           LogLevelWarn,
-				Format:          "json",
-				EnableColors:    false,
-				Component:       "risk-management",
-				ServiceName:     "trading-engine",
-				Environment:     "production",
+				Level:        LogLevelWarn,
+				Format:       "json",
+				EnableColors: false,
+				Component:    "risk-management",
+				ServiceName:  "trading-engine",
+				Environment:  "production",
 			},
 			expected: LogLevelWarn,
 		},
@@ -69,16 +69,16 @@ func TestRiskLogger_Creation(t *testing.T) {
 func TestRiskLogger_ContextExtraction(t *testing.T) {
 	// Create a buffer to capture log output
 	var buf bytes.Buffer
-	
+
 	// Create a custom handler that writes to our buffer
 	handler := slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
-	
+
 	config := LoggerConfig{
 		Level:     LogLevelDebug,
 		Format:    "json",
 		Component: "test-component",
 	}
-	
+
 	logger := &RiskLogger{
 		logger: slog.New(handler),
 		config: config,
@@ -94,7 +94,7 @@ func TestRiskLogger_ContextExtraction(t *testing.T) {
 
 	// Create logger with context
 	contextLogger := logger.WithContext(ctx)
-	
+
 	// Log a message
 	contextLogger.Info("Test message with context")
 
@@ -108,7 +108,7 @@ func TestRiskLogger_ContextExtraction(t *testing.T) {
 	// Verify context values are present
 	expectedValues := map[string]string{
 		"request_id":     "req-12345",
-		"correlation_id": "corr-67890", 
+		"correlation_id": "corr-67890",
 		"user_id":        "user-999",
 		"portfolio_id":   "port-abc",
 		"operation":      "VaR_calculation",
@@ -127,7 +127,7 @@ func TestRiskLogger_ContextExtraction(t *testing.T) {
 func TestRiskLogger_LogLevels(t *testing.T) {
 	var buf bytes.Buffer
 	handler := slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
-	
+
 	logger := &RiskLogger{
 		logger: slog.New(handler),
 		config: LoggerConfig{Level: LogLevelDebug, Format: "json"},
@@ -156,7 +156,7 @@ func TestRiskLogger_LogLevels(t *testing.T) {
 			level: "INFO",
 		},
 		{
-			name: "Warn level", 
+			name: "Warn level",
 			logFunc: func() {
 				logger.WarnContext(ctx, "Warning message", slog.String("test", "warn"))
 			},
@@ -213,7 +213,7 @@ func TestRiskLogger_LogLevels(t *testing.T) {
 func TestRiskLogger_ErrorIntegration(t *testing.T) {
 	var buf bytes.Buffer
 	handler := slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
-	
+
 	logger := &RiskLogger{
 		logger: slog.New(handler),
 		config: LoggerConfig{Level: LogLevelDebug, Format: "json"},
@@ -270,7 +270,7 @@ func TestRiskLogger_ErrorIntegration(t *testing.T) {
 func TestRiskLogger_CalculationLogging(t *testing.T) {
 	var buf bytes.Buffer
 	handler := slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo})
-	
+
 	logger := &RiskLogger{
 		logger: slog.New(handler),
 		config: LoggerConfig{Level: LogLevelInfo, Format: "json"},
@@ -304,7 +304,7 @@ func TestRiskLogger_CalculationLogging(t *testing.T) {
 	buf.Reset()
 	duration := 500 * time.Microsecond // Under 1ms SLA
 	result := map[string]interface{}{"cvar": 1234.56}
-	
+
 	logger.LogCalculationComplete(ctx, "CVaR", "historical", duration, true, result)
 
 	var completeEntry map[string]interface{}
@@ -324,7 +324,7 @@ func TestRiskLogger_CalculationLogging(t *testing.T) {
 	// Test calculation complete logging - SLA violation
 	buf.Reset()
 	slowDuration := 5 * time.Millisecond // Over 1ms SLA
-	
+
 	logger.LogCalculationComplete(ctx, "CVaR", "historical", slowDuration, true, result)
 
 	var slowEntry map[string]interface{}
@@ -346,7 +346,7 @@ func TestRiskLogger_CalculationLogging(t *testing.T) {
 func TestRiskLogger_SystemMetrics(t *testing.T) {
 	var buf bytes.Buffer
 	handler := slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo})
-	
+
 	logger := &RiskLogger{
 		logger: slog.New(handler),
 		config: LoggerConfig{Level: LogLevelInfo, Format: "json"},
@@ -396,10 +396,10 @@ func TestContextUtilities(t *testing.T) {
 
 	// Test setting and getting context values
 	tests := []struct {
-		name     string
-		setFunc  func(context.Context, string) context.Context
-		getFunc  func(context.Context) string
-		value    string
+		name    string
+		setFunc func(context.Context, string) context.Context
+		getFunc func(context.Context) string
+		value   string
 	}{
 		{
 			name:    "RequestID",
@@ -484,7 +484,7 @@ func TestGetCurrentSystemMetrics(t *testing.T) {
 // Benchmark tests for logging performance
 func BenchmarkRiskLogger_SimpleLog(b *testing.B) {
 	logger := NewRiskLogger(DefaultLoggerConfig())
-	
+
 	for i := 0; i < b.N; i++ {
 		logger.Info("Simple log message", slog.Int("iteration", i))
 	}
@@ -494,9 +494,9 @@ func BenchmarkRiskLogger_ContextLog(b *testing.B) {
 	logger := NewRiskLogger(DefaultLoggerConfig())
 	ctx := WithRequestID(WithCorrelationID(context.Background(), "corr-bench"), "req-bench")
 	contextLogger := logger.WithContext(ctx)
-	
+
 	for i := 0; i < b.N; i++ {
-		contextLogger.InfoContext(ctx, "Context log message", 
+		contextLogger.InfoContext(ctx, "Context log message",
 			slog.Int("iteration", i),
 			slog.String("operation", "benchmark"),
 		)
@@ -506,11 +506,11 @@ func BenchmarkRiskLogger_ContextLog(b *testing.B) {
 func BenchmarkRiskLogger_ErrorLog(b *testing.B) {
 	logger := NewRiskLogger(DefaultLoggerConfig())
 	ctx := WithRequestID(context.Background(), "req-error-bench")
-	
+
 	// Pre-create error to avoid construction cost in benchmark
-	err := NewCalculationError("benchmark_operation", 
+	err := NewCalculationError("benchmark_operation",
 		NewRiskError(ErrDivisionByZero, "Division by zero", "calculation"))
-	
+
 	for i := 0; i < b.N; i++ {
 		logger.LogError(ctx, err)
 	}
@@ -548,7 +548,7 @@ func TestDefaultLoggerConfig(t *testing.T) {
 func TestIntegration_ErrorHandlingWithLogging(t *testing.T) {
 	var buf bytes.Buffer
 	handler := slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug})
-	
+
 	logger := &RiskLogger{
 		logger: slog.New(handler),
 		config: LoggerConfig{Level: LogLevelDebug, Format: "json"},
@@ -568,7 +568,7 @@ func TestIntegration_ErrorHandlingWithLogging(t *testing.T) {
 	// Log calculation start
 	buf.Reset()
 	contextLogger.LogCalculationStart(ctx, "VaR", "historical", 100)
-	
+
 	// Verify start log contains all context
 	if !strings.Contains(buf.String(), "req-integration-test") {
 		t.Error("Expected request ID in calculation start log")
@@ -581,7 +581,7 @@ func TestIntegration_ErrorHandlingWithLogging(t *testing.T) {
 
 	buf.Reset()
 	contextLogger.LogError(ctx, insufficientDataError)
-	
+
 	// Parse and verify error log
 	var errorEntry map[string]interface{}
 	if err := json.Unmarshal(buf.Bytes(), &errorEntry); err != nil {
@@ -599,7 +599,7 @@ func TestIntegration_ErrorHandlingWithLogging(t *testing.T) {
 
 	// Log calculation failure
 	buf.Reset()
-	contextLogger.LogCalculationComplete(ctx, "VaR", "historical", 
+	contextLogger.LogCalculationComplete(ctx, "VaR", "historical",
 		2*time.Millisecond, false, nil)
 
 	if !strings.Contains(buf.String(), "SLA_VIOLATION") {

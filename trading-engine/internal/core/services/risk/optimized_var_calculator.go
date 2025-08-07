@@ -224,15 +224,15 @@ func (dp *DecimalPool) Put(d types.Decimal) {
 // VaRCache provides high-performance caching for VaR results
 // Following Single Responsibility Principle: focused only on caching
 type VaRCache struct {
-	data    map[string]*CacheEntry
+	data    map[string]*VaRCacheEntry
 	lruList *list.List
 	maxSize int
 	ttl     time.Duration
 	mu      sync.RWMutex
 }
 
-// CacheEntry represents a cached VaR calculation result
-type CacheEntry struct {
+// VaRCacheEntry represents a cached VaR calculation result
+type VaRCacheEntry struct {
 	Key         string
 	Result      VaRResult
 	Timestamp   time.Time
@@ -242,7 +242,7 @@ type CacheEntry struct {
 // NewVaRCache creates a new LRU cache for VaR results
 func NewVaRCache(maxSize int, ttl time.Duration) *VaRCache {
 	return &VaRCache{
-		data:    make(map[string]*CacheEntry, maxSize),
+		data:    make(map[string]*VaRCacheEntry, maxSize),
 		lruList: list.New(),
 		maxSize: maxSize,
 		ttl:     ttl,
@@ -289,7 +289,7 @@ func (vc *VaRCache) Set(key string, result VaRResult) {
 	}
 
 	// Create new entry
-	entry := &CacheEntry{
+	entry := &VaRCacheEntry{
 		Key:       key,
 		Result:    result,
 		Timestamp: time.Now(),
@@ -302,13 +302,13 @@ func (vc *VaRCache) Set(key string, result VaRResult) {
 		// Remove least recently used
 		oldest := vc.lruList.Back()
 		if oldest != nil {
-			vc.removeEntry(oldest.Value.(*CacheEntry))
+			vc.removeEntry(oldest.Value.(*VaRCacheEntry))
 		}
 	}
 }
 
 // removeEntry removes an entry from both map and list
-func (vc *VaRCache) removeEntry(entry *CacheEntry) {
+func (vc *VaRCache) removeEntry(entry *VaRCacheEntry) {
 	delete(vc.data, entry.Key)
 	vc.lruList.Remove(entry.ListElement)
 }

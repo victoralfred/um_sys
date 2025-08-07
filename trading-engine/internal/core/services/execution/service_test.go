@@ -25,16 +25,16 @@ func TestExecutionServiceStart(t *testing.T) {
 	// This test will FAIL - service doesn't exist yet
 	ctx := context.Background()
 	service := NewExecutionService(nil, nil)
-	
+
 	err := service.Start(ctx)
 	if err != nil {
 		t.Fatalf("Failed to start execution service: %v", err)
 	}
-	
+
 	if !service.IsHealthy() {
 		t.Error("Service should be healthy after start")
 	}
-	
+
 	// Clean up
 	defer service.Stop(ctx)
 }
@@ -42,24 +42,24 @@ func TestExecutionServiceStart(t *testing.T) {
 func TestExecutionServiceOrderSubmission(t *testing.T) {
 	// This test will FAIL - service doesn't exist yet
 	ctx := context.Background()
-	
+
 	// Mock execution engine will be needed
 	mockEngine := &MockExecutionEngine{}
 	mockValidator := &MockOrderValidator{}
-	
+
 	service := NewExecutionService(mockEngine, mockValidator)
 	err := service.Start(ctx)
 	if err != nil {
 		t.Fatalf("Failed to start service: %v", err)
 	}
 	defer service.Stop(ctx)
-	
+
 	// Create test order
 	asset := &domain.Asset{
 		Symbol:    "AAPL",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "TEST_SERVICE_001",
 		Asset:         asset,
@@ -71,17 +71,17 @@ func TestExecutionServiceOrderSubmission(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	// Submit order through service
 	result, err := service.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	if result == nil {
 		t.Fatal("Expected execution result")
 	}
-	
+
 	if result.Status != "SUBMITTED" && result.Status != "FILLED" {
 		t.Errorf("Expected order to be submitted or filled, got %s", result.Status)
 	}
@@ -90,26 +90,26 @@ func TestExecutionServiceOrderSubmission(t *testing.T) {
 func TestExecutionServiceOrderValidation(t *testing.T) {
 	// This test will FAIL - service doesn't exist yet
 	ctx := context.Background()
-	
+
 	mockEngine := &MockExecutionEngine{}
 	mockValidator := &MockOrderValidator{
 		shouldReject: true,
 		rejectReason: "Invalid order size",
 	}
-	
+
 	service := NewExecutionService(mockEngine, mockValidator)
 	err := service.Start(ctx)
 	if err != nil {
 		t.Fatalf("Failed to start service: %v", err)
 	}
 	defer service.Stop(ctx)
-	
+
 	// Create invalid test order
 	asset := &domain.Asset{
 		Symbol:    "INVALID",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "INVALID_ORDER",
 		Asset:         asset,
@@ -121,7 +121,7 @@ func TestExecutionServiceOrderValidation(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	// Should fail validation
 	_, err = service.SubmitOrder(ctx, order)
 	if err == nil {
@@ -132,23 +132,23 @@ func TestExecutionServiceOrderValidation(t *testing.T) {
 func TestExecutionServiceOrderTracking(t *testing.T) {
 	// This test will FAIL - service doesn't exist yet
 	ctx := context.Background()
-	
+
 	mockEngine := &MockExecutionEngine{}
 	mockValidator := &MockOrderValidator{}
-	
+
 	service := NewExecutionService(mockEngine, mockValidator)
 	err := service.Start(ctx)
 	if err != nil {
 		t.Fatalf("Failed to start service: %v", err)
 	}
 	defer service.Stop(ctx)
-	
+
 	// Submit order
 	asset := &domain.Asset{
 		Symbol:    "GOOGL",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "TRACK_TEST_001",
 		Asset:         asset,
@@ -161,22 +161,22 @@ func TestExecutionServiceOrderTracking(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	_, err = service.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Track order status
 	trackedOrder, err := service.GetOrderStatus(ctx, order.ID)
 	if err != nil {
 		t.Fatalf("Failed to get order status: %v", err)
 	}
-	
+
 	if trackedOrder == nil {
 		t.Fatal("Expected tracked order")
 	}
-	
+
 	if trackedOrder.ID != order.ID {
 		t.Errorf("Expected order ID %s, got %s", order.ID, trackedOrder.ID)
 	}
@@ -185,23 +185,23 @@ func TestExecutionServiceOrderTracking(t *testing.T) {
 func TestExecutionServiceOrderCancellation(t *testing.T) {
 	// This test will FAIL - service doesn't exist yet
 	ctx := context.Background()
-	
+
 	mockEngine := &MockExecutionEngine{}
 	mockValidator := &MockOrderValidator{}
-	
+
 	service := NewExecutionService(mockEngine, mockValidator)
 	err := service.Start(ctx)
 	if err != nil {
 		t.Fatalf("Failed to start service: %v", err)
 	}
 	defer service.Stop(ctx)
-	
+
 	// Submit order first
 	asset := &domain.Asset{
 		Symbol:    "MSFT",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "CANCEL_TEST_001",
 		Asset:         asset,
@@ -214,24 +214,24 @@ func TestExecutionServiceOrderCancellation(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	_, err = service.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Cancel the order
 	err = service.CancelOrder(ctx, order.ID)
 	if err != nil {
 		t.Fatalf("Failed to cancel order: %v", err)
 	}
-	
+
 	// Verify order is cancelled
 	cancelledOrder, err := service.GetOrderStatus(ctx, order.ID)
 	if err != nil {
 		t.Fatalf("Failed to get cancelled order status: %v", err)
 	}
-	
+
 	if cancelledOrder.Status != domain.OrderStatusCancelled {
 		t.Errorf("Expected order to be cancelled, got status %s", cancelledOrder.Status.String())
 	}
@@ -239,29 +239,29 @@ func TestExecutionServiceOrderCancellation(t *testing.T) {
 
 func TestExecutionServiceMetrics(t *testing.T) {
 	ctx := context.Background()
-	
+
 	mockEngine := &MockExecutionEngine{}
 	mockValidator := &MockOrderValidator{}
-	
+
 	service := NewExecutionService(mockEngine, mockValidator)
 	err := service.Start(ctx)
 	if err != nil {
 		t.Fatalf("Failed to start service: %v", err)
 	}
 	defer service.Stop(ctx)
-	
+
 	// Get initial metrics
 	metrics := service.GetMetrics()
 	if metrics.TotalOrdersProcessed != 0 {
 		t.Errorf("Expected 0 initial orders, got %d", metrics.TotalOrdersProcessed)
 	}
-	
+
 	// Submit an order to generate metrics
 	asset := &domain.Asset{
 		Symbol:    "TSLA",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "METRICS_TEST_001",
 		Asset:         asset,
@@ -273,12 +273,12 @@ func TestExecutionServiceMetrics(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	_, err = service.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Check updated metrics
 	updatedMetrics := service.GetMetrics()
 	if updatedMetrics.TotalOrdersProcessed == 0 {
@@ -288,34 +288,34 @@ func TestExecutionServiceMetrics(t *testing.T) {
 
 func TestExecutionServiceEnhancedFeatures(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Test enhanced service with custom config
 	config := ServiceConfig{
-		MaxConcurrentOrders:   2,
-		OrderTimeout:          5 * time.Second,
-		EnableMetrics:         true,
-		MetricsResetInterval:  time.Minute,
-		EnableValidation:      true,
-		MaxRetryAttempts:      1,
-		RetryBackoffDuration:  50 * time.Millisecond,
+		MaxConcurrentOrders:  2,
+		OrderTimeout:         5 * time.Second,
+		EnableMetrics:        true,
+		MetricsResetInterval: time.Minute,
+		EnableValidation:     true,
+		MaxRetryAttempts:     1,
+		RetryBackoffDuration: 50 * time.Millisecond,
 	}
-	
+
 	mockEngine := &MockExecutionEngine{}
 	mockValidator := &MockOrderValidator{}
-	
+
 	service := NewExecutionServiceWithConfig(mockEngine, mockValidator, config)
 	err := service.Start(ctx)
 	if err != nil {
 		t.Fatalf("Failed to start service: %v", err)
 	}
 	defer service.Stop(ctx)
-	
+
 	// Test concurrent order limit
 	asset := &domain.Asset{
 		Symbol:    "TEST",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	// Submit maximum allowed orders
 	for i := 0; i < config.MaxConcurrentOrders; i++ {
 		order := &domain.Order{
@@ -329,13 +329,13 @@ func TestExecutionServiceEnhancedFeatures(t *testing.T) {
 			CreatedAt:     time.Now(),
 			Status:        domain.OrderStatusPending,
 		}
-		
+
 		_, err = service.SubmitOrder(ctx, order)
 		if err != nil {
 			t.Fatalf("Failed to submit order %d: %v", i, err)
 		}
 	}
-	
+
 	// Next order should be rejected due to limit
 	limitOrder := &domain.Order{
 		ID:            "LIMIT_EXCEEDED",
@@ -348,35 +348,35 @@ func TestExecutionServiceEnhancedFeatures(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	_, err = service.SubmitOrder(ctx, limitOrder)
 	if err == nil {
 		t.Error("Expected error for exceeding concurrent order limit")
 	}
-	
+
 	// Test active order tracking
 	activeCount := service.GetActiveOrderCount()
 	if activeCount != config.MaxConcurrentOrders {
 		t.Errorf("Expected %d active orders, got %d", config.MaxConcurrentOrders, activeCount)
 	}
-	
+
 	// Test service metrics
 	serviceMetrics := service.GetServiceMetrics()
 	if serviceMetrics.TotalOrdersSubmitted != uint64(config.MaxConcurrentOrders) {
 		t.Errorf("Expected %d submitted orders, got %d", config.MaxConcurrentOrders, serviceMetrics.TotalOrdersSubmitted)
 	}
-	
+
 	if serviceMetrics.TotalOrdersRejected != 1 {
 		t.Errorf("Expected 1 rejected order, got %d", serviceMetrics.TotalOrdersRejected)
 	}
-	
+
 	// Test metrics reset
 	service.ResetMetrics()
 	resetMetrics := service.GetServiceMetrics()
 	if resetMetrics.TotalOrdersSubmitted != 0 {
 		t.Errorf("Expected 0 orders after reset, got %d", resetMetrics.TotalOrdersSubmitted)
 	}
-	
+
 	// Test config retrieval
 	retrievedConfig := service.GetConfig()
 	if retrievedConfig.MaxConcurrentOrders != config.MaxConcurrentOrders {

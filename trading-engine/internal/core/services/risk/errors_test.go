@@ -12,14 +12,14 @@ import (
 // TestRiskError_CreationAndBasicProperties tests basic error creation and properties
 func TestRiskError_CreationAndBasicProperties(t *testing.T) {
 	tests := []struct {
-		name          string
-		code          ErrorCode
-		message       string
-		operation     string
-		expectedSev   ErrorSeverity
-		expectedCat   ErrorCategory
-		expectRetry   bool
-		expectTemp    bool
+		name        string
+		code        ErrorCode
+		message     string
+		operation   string
+		expectedSev ErrorSeverity
+		expectedCat ErrorCategory
+		expectRetry bool
+		expectTemp  bool
 	}{
 		{
 			name:        "Critical data corruption error",
@@ -437,7 +437,7 @@ func TestRiskError_BackoffDelayProgression(t *testing.T) {
 
 // Helper function to check if string contains substring
 func containsString(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || containsString(s[1:], substr) || 
+	return len(s) >= len(substr) && (s == substr || containsString(s[1:], substr) ||
 		(len(s) > len(substr) && s[:len(substr)] == substr))
 }
 
@@ -445,19 +445,19 @@ func containsString(s, substr string) bool {
 func TestRiskError_ThreadSafety(t *testing.T) {
 	// This is a basic test - in a real scenario you'd use goroutines to test concurrency
 	errors := make([]*RiskError, 100)
-	
+
 	for i := 0; i < 100; i++ {
 		errors[i] = NewRiskError(ErrTimeout, "Concurrent test", "thread_safety_test").
 			WithRequestID(fmt.Sprintf("req-%d", i)).
 			WithDetails("iteration", i)
 	}
-	
+
 	// Verify all errors were created properly
 	for i, err := range errors {
 		if err.Context.RequestID != fmt.Sprintf("req-%d", i) {
 			t.Errorf("Request ID mismatch at index %d", i)
 		}
-		
+
 		if err.Details.ActualData["iteration"] != i {
 			t.Errorf("Iteration mismatch at index %d", i)
 		}
@@ -484,7 +484,7 @@ func BenchmarkRiskError_FluentConstruction(b *testing.B) {
 
 func BenchmarkRiskError_RetryCalculation(b *testing.B) {
 	err := NewRiskError(ErrTimeout, "Benchmark test", "benchmark_operation")
-	
+
 	for i := 0; i < b.N; i++ {
 		_ = err.ShouldRetry(i % 5)
 		_ = err.GetRetryDelay(i % 5)

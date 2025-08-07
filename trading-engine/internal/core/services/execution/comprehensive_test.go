@@ -16,7 +16,7 @@ func createTestAsset(symbol string) *domain.Asset {
 	minQty, _ := types.NewDecimal("0.01")
 	maxQty, _ := types.NewDecimal("1000000")
 	tickSize, _ := types.NewDecimal("0.01")
-	
+
 	return &domain.Asset{
 		Symbol:      symbol,
 		Name:        symbol + " Stock",
@@ -35,15 +35,15 @@ func createTestAsset(symbol string) *domain.Asset {
 func createTestOrder(id, symbol string, side domain.OrderSide, orderType domain.OrderType, quantity, price float64) *domain.Order {
 	qty := types.NewDecimalFromFloat(quantity)
 	prc := types.NewDecimalFromFloat(price)
-	
+
 	return &domain.Order{
-		ID:       id,
-		Asset:    createTestAsset(symbol),
-		Type:     orderType,
-		Side:     side,
-		Status:   domain.OrderStatusPending,
-		Quantity: qty,
-		Price:    prc,
+		ID:          id,
+		Asset:       createTestAsset(symbol),
+		Type:        orderType,
+		Side:        side,
+		Status:      domain.OrderStatusPending,
+		Quantity:    qty,
+		Price:       prc,
 		TimeInForce: domain.TimeInForceGTC,
 	}
 }
@@ -55,7 +55,7 @@ func TestComprehensiveExecutionSystem(t *testing.T) {
 
 	// Initialize optimized service with test configuration
 	service := NewOptimizedExecutionService(nil, nil)
-	
+
 	// Start the service
 	if err := service.Start(ctx); err != nil {
 		t.Fatalf("Failed to start optimized service: %v", err)
@@ -128,19 +128,19 @@ func testConcurrentOrderProcessing(t *testing.T, service *OptimizedExecutionServ
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < ordersPerGoroutine; j++ {
 				order := createTestOrder(
 					fmt.Sprintf("concurrent-%d-%d", goroutineID, j),
-					"MSFT", 
-					domain.OrderSideBuy, 
-					domain.OrderTypeMarket, 
-					10, 
+					"MSFT",
+					domain.OrderSideBuy,
+					domain.OrderTypeMarket,
+					10,
 					300.0,
 				)
 
 				_, err := service.SubmitOrder(ctx, order)
-				
+
 				mu.Lock()
 				if err != nil {
 					errors = append(errors, err)
@@ -325,10 +325,10 @@ func TestExecutionSystemStressTest(t *testing.T) {
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
-			
+
 			localOrders := 0
 			localErrors := 0
-			
+
 			for {
 				select {
 				case <-stopChan:

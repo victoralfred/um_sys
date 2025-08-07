@@ -15,14 +15,14 @@ import (
 
 func TestOrderManagerWithCustomConfig(t *testing.T) {
 	config := OrderManagerConfig{
-		MaxOrders:             5,
-		EnableMetrics:         true,
-		MetricsResetInterval:  time.Minute,
-		EnableEventCallbacks:  false, // Disable for this test
-		OrderTimeoutDuration:  time.Hour,
-		EnableAutoCleanup:     false, // Disable for this test
-		CleanupInterval:       time.Hour,
-		MaxHistoryPerOrder:    10,
+		MaxOrders:            5,
+		EnableMetrics:        true,
+		MetricsResetInterval: time.Minute,
+		EnableEventCallbacks: false, // Disable for this test
+		OrderTimeoutDuration: time.Hour,
+		EnableAutoCleanup:    false, // Disable for this test
+		CleanupInterval:      time.Hour,
+		MaxHistoryPerOrder:   10,
 	}
 
 	manager := NewOrderManagerWithConfig(config)
@@ -281,14 +281,14 @@ func TestOrderManagerDuplicateOrder(t *testing.T) {
 
 func TestOrderManagerFillHistoryLimit(t *testing.T) {
 	config := OrderManagerConfig{
-		MaxOrders:             100,
-		EnableMetrics:         true,
-		MetricsResetInterval:  time.Hour,
-		EnableEventCallbacks:  false,
-		OrderTimeoutDuration:  time.Hour,
-		EnableAutoCleanup:     false,
-		CleanupInterval:       time.Hour,
-		MaxHistoryPerOrder:    3, // Limit to 3 fills
+		MaxOrders:            100,
+		EnableMetrics:        true,
+		MetricsResetInterval: time.Hour,
+		EnableEventCallbacks: false,
+		OrderTimeoutDuration: time.Hour,
+		EnableAutoCleanup:    false,
+		CleanupInterval:      time.Hour,
+		MaxHistoryPerOrder:   3, // Limit to 3 fills
 	}
 
 	manager := NewOrderManagerWithConfig(config)

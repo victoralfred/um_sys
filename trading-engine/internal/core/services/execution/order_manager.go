@@ -13,27 +13,27 @@ import (
 
 // OrderManagerConfig contains configuration for the order manager
 type OrderManagerConfig struct {
-	MaxOrders             int           `json:"max_orders"`
-	EnableMetrics         bool          `json:"enable_metrics"`
-	MetricsResetInterval  time.Duration `json:"metrics_reset_interval"`
-	EnableEventCallbacks  bool          `json:"enable_event_callbacks"`
-	OrderTimeoutDuration  time.Duration `json:"order_timeout_duration"`
-	EnableAutoCleanup     bool          `json:"enable_auto_cleanup"`
-	CleanupInterval       time.Duration `json:"cleanup_interval"`
-	MaxHistoryPerOrder    int           `json:"max_history_per_order"`
+	MaxOrders            int           `json:"max_orders"`
+	EnableMetrics        bool          `json:"enable_metrics"`
+	MetricsResetInterval time.Duration `json:"metrics_reset_interval"`
+	EnableEventCallbacks bool          `json:"enable_event_callbacks"`
+	OrderTimeoutDuration time.Duration `json:"order_timeout_duration"`
+	EnableAutoCleanup    bool          `json:"enable_auto_cleanup"`
+	CleanupInterval      time.Duration `json:"cleanup_interval"`
+	MaxHistoryPerOrder   int           `json:"max_history_per_order"`
 }
 
 // DefaultOrderManagerConfig returns reasonable default configuration
 func DefaultOrderManagerConfig() OrderManagerConfig {
 	return OrderManagerConfig{
-		MaxOrders:             10000,
-		EnableMetrics:         true,
-		MetricsResetInterval:  time.Hour,
-		EnableEventCallbacks:  true,
-		OrderTimeoutDuration:  24 * time.Hour,
-		EnableAutoCleanup:     true,
-		CleanupInterval:       time.Hour,
-		MaxHistoryPerOrder:    100,
+		MaxOrders:            10000,
+		EnableMetrics:        true,
+		MetricsResetInterval: time.Hour,
+		EnableEventCallbacks: true,
+		OrderTimeoutDuration: 24 * time.Hour,
+		EnableAutoCleanup:    true,
+		CleanupInterval:      time.Hour,
+		MaxHistoryPerOrder:   100,
 	}
 }
 
@@ -63,29 +63,29 @@ type StatusEventHandler interface {
 // DefaultOrderManager implements OrderManager interface with state machine
 // TDD REFACTOR phase - enhanced production-ready implementation
 type DefaultOrderManager struct {
-	mu            sync.RWMutex
-	orders        map[string]*domain.Order     // Track all orders by ID
-	fills         map[string][]ports.Fill      // Track fills by order ID
+	mu             sync.RWMutex
+	orders         map[string]*domain.Order               // Track all orders by ID
+	fills          map[string][]ports.Fill                // Track fills by order ID
 	ordersByStatus map[domain.OrderStatus][]*domain.Order // Index by status for fast queries
-	
+
 	// Configuration and metrics
 	config  OrderManagerConfig
 	metrics OrderManagerMetrics
-	
+
 	// Event callbacks
 	fillHandlers   []FillEventHandler
 	statusHandlers []StatusEventHandler
-	
+
 	// Lifecycle management
-	ctx      context.Context
-	cancel   context.CancelFunc
-	stopped  chan struct{}
+	ctx     context.Context
+	cancel  context.CancelFunc
+	stopped chan struct{}
 }
 
 // NewOrderManager creates a new order manager with default configuration
 func NewOrderManager() *DefaultOrderManager {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	manager := &DefaultOrderManager{
 		orders:         make(map[string]*domain.Order),
 		fills:          make(map[string][]ports.Fill),
@@ -98,22 +98,22 @@ func NewOrderManager() *DefaultOrderManager {
 		cancel:         cancel,
 		stopped:        make(chan struct{}),
 	}
-	
+
 	// Initialize status index
 	manager.initializeStatusIndex()
-	
+
 	// Start background goroutines if enabled
 	if manager.config.EnableAutoCleanup {
 		go manager.cleanupRoutine()
 	}
-	
+
 	return manager
 }
 
 // NewOrderManagerWithConfig creates an order manager with custom configuration
 func NewOrderManagerWithConfig(config OrderManagerConfig) *DefaultOrderManager {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	manager := &DefaultOrderManager{
 		orders:         make(map[string]*domain.Order),
 		fills:          make(map[string][]ports.Fill),
@@ -126,15 +126,15 @@ func NewOrderManagerWithConfig(config OrderManagerConfig) *DefaultOrderManager {
 		cancel:         cancel,
 		stopped:        make(chan struct{}),
 	}
-	
+
 	// Initialize status index
 	manager.initializeStatusIndex()
-	
+
 	// Start background goroutines if enabled
 	if manager.config.EnableAutoCleanup {
 		go manager.cleanupRoutine()
 	}
-	
+
 	return manager
 }
 
@@ -149,7 +149,7 @@ func (m *DefaultOrderManager) initializeStatusIndex() {
 		domain.OrderStatusRejected,
 		domain.OrderStatusExpired,
 	}
-	
+
 	for _, status := range statuses {
 		m.ordersByStatus[status] = make([]*domain.Order, 0)
 	}
@@ -158,34 +158,34 @@ func (m *DefaultOrderManager) initializeStatusIndex() {
 // SubmitOrder submits a new order to the management system
 func (m *DefaultOrderManager) SubmitOrder(ctx context.Context, order *domain.Order) error {
 	startTime := time.Now()
-	
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// Check order limit
 	if len(m.orders) >= m.config.MaxOrders {
 		return fmt.Errorf("order limit exceeded (%d)", m.config.MaxOrders)
 	}
-	
+
 	// Check if order already exists
 	if _, exists := m.orders[order.ID]; exists {
 		return fmt.Errorf("order %s already exists", order.ID)
 	}
-	
+
 	// Store the order
 	orderCopy := *order
 	m.orders[order.ID] = &orderCopy
-	
+
 	// Add to status index
 	m.addToStatusIndex(&orderCopy)
-	
+
 	// Update metrics
 	if m.config.EnableMetrics {
 		m.metrics.TotalOrdersProcessed++
 		m.updateActiveOrdersCount()
 		m.updateProcessingTime(time.Since(startTime))
 	}
-	
+
 	return nil
 }
 
@@ -193,34 +193,34 @@ func (m *DefaultOrderManager) SubmitOrder(ctx context.Context, order *domain.Ord
 func (m *DefaultOrderManager) ProcessFill(ctx context.Context, fill *ports.Fill) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// Find the order
 	order, exists := m.orders[fill.OrderID]
 	if !exists {
 		return fmt.Errorf("order %s not found", fill.OrderID)
 	}
-	
+
 	oldStatus := order.Status
-	
+
 	// Add fill to history (with size limit)
 	fills := m.fills[fill.OrderID]
 	fills = append(fills, *fill)
-	
+
 	// Limit fill history size
 	if len(fills) > m.config.MaxHistoryPerOrder {
 		fills = fills[len(fills)-m.config.MaxHistoryPerOrder:]
 	}
 	m.fills[fill.OrderID] = fills
-	
+
 	// Calculate total filled quantity
 	totalFilled := types.NewDecimalFromFloat(0.0)
 	for _, f := range fills {
 		totalFilled = totalFilled.Add(f.Quantity)
 	}
-	
+
 	// Remove from old status index
 	m.removeFromStatusIndex(order)
-	
+
 	// Update order status based on fill quantity
 	if totalFilled.Cmp(order.Quantity) >= 0 {
 		// Fully filled
@@ -229,29 +229,29 @@ func (m *DefaultOrderManager) ProcessFill(ctx context.Context, fill *ports.Fill)
 		// Partially filled
 		order.Status = domain.OrderStatusPartiallyFilled
 	}
-	
+
 	order.UpdatedAt = time.Now()
-	
+
 	// Add to new status index
 	m.addToStatusIndex(order)
-	
+
 	// Update metrics
 	if m.config.EnableMetrics {
 		m.metrics.TotalFillsProcessed++
 		m.updateStatusMetrics(order.Status)
 		m.updateActiveOrdersCount()
 	}
-	
+
 	// Fire fill events
 	if m.config.EnableEventCallbacks {
 		go m.notifyFillHandlers(ctx, fill.OrderID, fill, order)
-		
+
 		// Also fire status change event if status changed
 		if oldStatus != order.Status {
 			go m.notifyStatusHandlers(ctx, fill.OrderID, oldStatus, order.Status, order)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -259,36 +259,36 @@ func (m *DefaultOrderManager) ProcessFill(ctx context.Context, fill *ports.Fill)
 func (m *DefaultOrderManager) ProcessReject(ctx context.Context, orderID string, reason string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// Find the order
 	order, exists := m.orders[orderID]
 	if !exists {
 		return fmt.Errorf("order %s not found", orderID)
 	}
-	
+
 	oldStatus := order.Status
-	
+
 	// Remove from old status index
 	m.removeFromStatusIndex(order)
-	
+
 	// Update status to rejected
 	order.Status = domain.OrderStatusRejected
 	order.UpdatedAt = time.Now()
-	
+
 	// Add to new status index
 	m.addToStatusIndex(order)
-	
+
 	// Update metrics
 	if m.config.EnableMetrics {
 		m.updateStatusMetrics(order.Status)
 		m.updateActiveOrdersCount()
 	}
-	
+
 	// Fire status change events
 	if m.config.EnableEventCallbacks {
 		go m.notifyStatusHandlers(ctx, orderID, oldStatus, order.Status, order)
 	}
-	
+
 	return nil
 }
 
@@ -296,41 +296,41 @@ func (m *DefaultOrderManager) ProcessReject(ctx context.Context, orderID string,
 func (m *DefaultOrderManager) UpdateOrderStatus(ctx context.Context, orderID string, status domain.OrderStatus) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// Find the order
 	order, exists := m.orders[orderID]
 	if !exists {
 		return fmt.Errorf("order %s not found", orderID)
 	}
-	
+
 	oldStatus := order.Status
-	
+
 	// Validate the transition
 	if !m.isValidTransition(oldStatus, status) {
 		return fmt.Errorf("invalid transition from %s to %s", oldStatus.String(), status.String())
 	}
-	
+
 	// Remove from old status index
 	m.removeFromStatusIndex(order)
-	
+
 	// Update status
 	order.Status = status
 	order.UpdatedAt = time.Now()
-	
+
 	// Add to new status index
 	m.addToStatusIndex(order)
-	
+
 	// Update metrics
 	if m.config.EnableMetrics {
 		m.updateStatusMetrics(status)
 		m.updateActiveOrdersCount()
 	}
-	
+
 	// Fire status change events
 	if m.config.EnableEventCallbacks {
 		go m.notifyStatusHandlers(ctx, orderID, oldStatus, status, order)
 	}
-	
+
 	return nil
 }
 
@@ -338,12 +338,12 @@ func (m *DefaultOrderManager) UpdateOrderStatus(ctx context.Context, orderID str
 func (m *DefaultOrderManager) GetOrder(ctx context.Context, orderID string) (*domain.Order, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	order, exists := m.orders[orderID]
 	if !exists {
 		return nil, fmt.Errorf("order %s not found", orderID)
 	}
-	
+
 	// Return a copy to prevent external mutation
 	orderCopy := *order
 	return &orderCopy, nil
@@ -353,9 +353,9 @@ func (m *DefaultOrderManager) GetOrder(ctx context.Context, orderID string) (*do
 func (m *DefaultOrderManager) GetOrdersByStatus(ctx context.Context, status domain.OrderStatus) ([]*domain.Order, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	var matchingOrders []*domain.Order
-	
+
 	for _, order := range m.orders {
 		if order.Status == status {
 			// Add copy to prevent external mutation
@@ -363,7 +363,7 @@ func (m *DefaultOrderManager) GetOrdersByStatus(ctx context.Context, status doma
 			matchingOrders = append(matchingOrders, &orderCopy)
 		}
 	}
-	
+
 	return matchingOrders, nil
 }
 
@@ -371,17 +371,17 @@ func (m *DefaultOrderManager) GetOrdersByStatus(ctx context.Context, status doma
 func (m *DefaultOrderManager) ValidateOrderTransition(ctx context.Context, orderID string, newStatus domain.OrderStatus) error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	// Find the order
 	order, exists := m.orders[orderID]
 	if !exists {
 		return fmt.Errorf("order %s not found", orderID)
 	}
-	
+
 	if !m.isValidTransition(order.Status, newStatus) {
 		return fmt.Errorf("invalid transition from %s to %s", order.Status.String(), newStatus.String())
 	}
-	
+
 	return nil
 }
 
@@ -407,23 +407,23 @@ func (m *DefaultOrderManager) isValidTransition(current, next domain.OrderStatus
 			domain.OrderStatusExpired,
 		},
 		// Terminal states cannot transition
-		domain.OrderStatusFilled:     {},
-		domain.OrderStatusCancelled:  {},
-		domain.OrderStatusRejected:   {},
-		domain.OrderStatusExpired:    {},
+		domain.OrderStatusFilled:    {},
+		domain.OrderStatusCancelled: {},
+		domain.OrderStatusRejected:  {},
+		domain.OrderStatusExpired:   {},
 	}
-	
+
 	allowedTransitions, exists := validTransitions[current]
 	if !exists {
 		return false
 	}
-	
+
 	for _, allowed := range allowedTransitions {
 		if allowed == next {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -456,7 +456,7 @@ func (m *DefaultOrderManager) updateProcessingTime(duration time.Duration) {
 		alpha := 0.1
 		m.metrics.AverageProcessingTime = time.Duration(
 			float64(m.metrics.AverageProcessingTime)*(1-alpha) +
-			float64(duration)*alpha,
+				float64(duration)*alpha,
 		)
 	}
 }
@@ -469,11 +469,11 @@ func (m *DefaultOrderManager) updateActiveOrdersCount() {
 		domain.OrderStatusSubmitted,
 		domain.OrderStatusPartiallyFilled,
 	}
-	
+
 	for _, status := range activeStatuses {
 		activeCount += uint64(len(m.ordersByStatus[status]))
 	}
-	
+
 	m.metrics.ActiveOrders = activeCount
 }
 
@@ -516,7 +516,7 @@ func (m *DefaultOrderManager) notifyFillHandlers(ctx context.Context, orderID st
 func (m *DefaultOrderManager) cleanupRoutine() {
 	ticker := time.NewTicker(m.config.CleanupInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-m.ctx.Done():
@@ -532,7 +532,7 @@ func (m *DefaultOrderManager) cleanupRoutine() {
 func (m *DefaultOrderManager) performCleanup() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	cutoffTime := time.Now().Add(-m.config.OrderTimeoutDuration)
 	terminalStatuses := []domain.OrderStatus{
 		domain.OrderStatusFilled,
@@ -540,11 +540,11 @@ func (m *DefaultOrderManager) performCleanup() {
 		domain.OrderStatusRejected,
 		domain.OrderStatusExpired,
 	}
-	
+
 	for _, status := range terminalStatuses {
 		orders := m.ordersByStatus[status]
 		newOrders := make([]*domain.Order, 0, len(orders))
-		
+
 		for _, order := range orders {
 			if order.UpdatedAt.After(cutoffTime) {
 				newOrders = append(newOrders, order)
@@ -554,7 +554,7 @@ func (m *DefaultOrderManager) performCleanup() {
 				delete(m.fills, order.ID)
 			}
 		}
-		
+
 		m.ordersByStatus[status] = newOrders
 	}
 }
@@ -601,11 +601,11 @@ func (m *DefaultOrderManager) GetConfig() OrderManagerConfig {
 // Stop gracefully stops the order manager
 func (m *DefaultOrderManager) Stop() error {
 	m.cancel()
-	
+
 	// Wait for cleanup routine to finish
 	if m.config.EnableAutoCleanup {
 		<-m.stopped
 	}
-	
+
 	return nil
 }

@@ -92,7 +92,7 @@ func (e *CGOExecutionEngine) IsHealthy() bool {
 	if !e.initialized || !e.running {
 		return false
 	}
-	
+
 	healthy := C.engine_is_healthy()
 	return int(healthy) == 1
 }
@@ -105,10 +105,10 @@ func (e *CGOExecutionEngine) SubmitOrder(ctx context.Context, order *domain.Orde
 
 	// Convert Go order to C request
 	request := e.orderToRequest(order)
-	
+
 	var response C.COrderResponse
 	result := C.engine_submit_order(&request, &response)
-	
+
 	if result != C.EXEC_SUCCESS {
 		return &ports.ExecutionResult{
 			OrderID:      order.ID,
@@ -224,8 +224,8 @@ func (e *CGOExecutionEngine) GetMetrics() ports.ExecutionMetrics {
 		FailedExecutions:     uint64(metrics.failed_executions),
 		ActiveOrders:         uint64(metrics.active_orders),
 		AverageLatency:       time.Duration(metrics.average_latency_micros) * time.Microsecond,
-		P99Latency:          time.Duration(metrics.p99_latency_micros) * time.Microsecond,
-		OrdersPerSecond:     float64(metrics.orders_per_second),
+		P99Latency:           time.Duration(metrics.p99_latency_micros) * time.Microsecond,
+		OrdersPerSecond:      float64(metrics.orders_per_second),
 	}
 }
 

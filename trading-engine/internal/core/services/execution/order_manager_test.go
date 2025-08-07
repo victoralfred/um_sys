@@ -25,12 +25,12 @@ func TestOrderManagerSubmitOrder(t *testing.T) {
 	// This test will FAIL - OrderManager doesn't exist yet
 	ctx := context.Background()
 	manager := NewOrderManager()
-	
+
 	asset := &domain.Asset{
 		Symbol:    "AAPL",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "OM_TEST_001",
 		Asset:         asset,
@@ -42,18 +42,18 @@ func TestOrderManagerSubmitOrder(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	err := manager.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Order should now be tracked
 	retrievedOrder, err := manager.GetOrder(ctx, order.ID)
 	if err != nil {
 		t.Fatalf("Failed to retrieve order: %v", err)
 	}
-	
+
 	if retrievedOrder.ID != order.ID {
 		t.Errorf("Expected order ID %s, got %s", order.ID, retrievedOrder.ID)
 	}
@@ -63,12 +63,12 @@ func TestOrderManagerStateTransitions(t *testing.T) {
 	// This test will FAIL - OrderManager doesn't exist yet
 	ctx := context.Background()
 	manager := NewOrderManager()
-	
+
 	asset := &domain.Asset{
 		Symbol:    "GOOGL",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "STATE_TEST_001",
 		Asset:         asset,
@@ -81,37 +81,37 @@ func TestOrderManagerStateTransitions(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	// Submit order
 	err := manager.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Test valid transition: PENDING -> SUBMITTED
 	err = manager.UpdateOrderStatus(ctx, order.ID, domain.OrderStatusSubmitted)
 	if err != nil {
 		t.Fatalf("Failed to update order status to SUBMITTED: %v", err)
 	}
-	
+
 	// Test valid transition: SUBMITTED -> PARTIALLY_FILLED
 	err = manager.UpdateOrderStatus(ctx, order.ID, domain.OrderStatusPartiallyFilled)
 	if err != nil {
 		t.Fatalf("Failed to update order status to PARTIALLY_FILLED: %v", err)
 	}
-	
+
 	// Test valid transition: PARTIALLY_FILLED -> FILLED
 	err = manager.UpdateOrderStatus(ctx, order.ID, domain.OrderStatusFilled)
 	if err != nil {
 		t.Fatalf("Failed to update order status to FILLED: %v", err)
 	}
-	
+
 	// Verify final status
 	finalOrder, err := manager.GetOrder(ctx, order.ID)
 	if err != nil {
 		t.Fatalf("Failed to get final order: %v", err)
 	}
-	
+
 	if finalOrder.Status != domain.OrderStatusFilled {
 		t.Errorf("Expected final status FILLED, got %s", finalOrder.Status.String())
 	}
@@ -121,12 +121,12 @@ func TestOrderManagerInvalidStateTransitions(t *testing.T) {
 	// This test will FAIL - OrderManager doesn't exist yet
 	ctx := context.Background()
 	manager := NewOrderManager()
-	
+
 	asset := &domain.Asset{
 		Symbol:    "MSFT",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "INVALID_TRANSITION_001",
 		Asset:         asset,
@@ -138,24 +138,24 @@ func TestOrderManagerInvalidStateTransitions(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	err := manager.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Test invalid transition: PENDING -> FILLED (should fail)
 	err = manager.UpdateOrderStatus(ctx, order.ID, domain.OrderStatusFilled)
 	if err == nil {
 		t.Error("Expected error for invalid transition from PENDING to FILLED")
 	}
-	
+
 	// Test invalid transition: PENDING -> CANCELLED (valid)
 	err = manager.UpdateOrderStatus(ctx, order.ID, domain.OrderStatusCancelled)
 	if err != nil {
 		t.Fatalf("Failed to cancel order: %v", err)
 	}
-	
+
 	// Test invalid transition: CANCELLED -> SUBMITTED (should fail)
 	err = manager.UpdateOrderStatus(ctx, order.ID, domain.OrderStatusSubmitted)
 	if err == nil {
@@ -167,12 +167,12 @@ func TestOrderManagerProcessFill(t *testing.T) {
 	// This test will FAIL - OrderManager doesn't exist yet
 	ctx := context.Background()
 	manager := NewOrderManager()
-	
+
 	asset := &domain.Asset{
 		Symbol:    "TSLA",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "FILL_TEST_001",
 		Asset:         asset,
@@ -185,18 +185,18 @@ func TestOrderManagerProcessFill(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	err := manager.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Update to submitted first
 	err = manager.UpdateOrderStatus(ctx, order.ID, domain.OrderStatusSubmitted)
 	if err != nil {
 		t.Fatalf("Failed to update status to SUBMITTED: %v", err)
 	}
-	
+
 	// Process partial fill
 	partialFill := &ports.Fill{
 		ID:        "FILL_001",
@@ -206,22 +206,22 @@ func TestOrderManagerProcessFill(t *testing.T) {
 		Timestamp: time.Now(),
 		Venue:     "TEST_VENUE",
 	}
-	
+
 	err = manager.ProcessFill(ctx, partialFill)
 	if err != nil {
 		t.Fatalf("Failed to process fill: %v", err)
 	}
-	
+
 	// Order should be partially filled
 	filledOrder, err := manager.GetOrder(ctx, order.ID)
 	if err != nil {
 		t.Fatalf("Failed to get filled order: %v", err)
 	}
-	
+
 	if filledOrder.Status != domain.OrderStatusPartiallyFilled {
 		t.Errorf("Expected status PARTIALLY_FILLED, got %s", filledOrder.Status.String())
 	}
-	
+
 	// Process remaining fill
 	remainingFill := &ports.Fill{
 		ID:        "FILL_002",
@@ -231,18 +231,18 @@ func TestOrderManagerProcessFill(t *testing.T) {
 		Timestamp: time.Now(),
 		Venue:     "TEST_VENUE",
 	}
-	
+
 	err = manager.ProcessFill(ctx, remainingFill)
 	if err != nil {
 		t.Fatalf("Failed to process remaining fill: %v", err)
 	}
-	
+
 	// Order should be fully filled
 	completeOrder, err := manager.GetOrder(ctx, order.ID)
 	if err != nil {
 		t.Fatalf("Failed to get complete order: %v", err)
 	}
-	
+
 	if completeOrder.Status != domain.OrderStatusFilled {
 		t.Errorf("Expected status FILLED, got %s", completeOrder.Status.String())
 	}
@@ -252,12 +252,12 @@ func TestOrderManagerProcessReject(t *testing.T) {
 	// This test will FAIL - OrderManager doesn't exist yet
 	ctx := context.Background()
 	manager := NewOrderManager()
-	
+
 	asset := &domain.Asset{
 		Symbol:    "AMZN",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "REJECT_TEST_001",
 		Asset:         asset,
@@ -269,25 +269,25 @@ func TestOrderManagerProcessReject(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	err := manager.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Process rejection
 	rejectReason := "Insufficient funds"
 	err = manager.ProcessReject(ctx, order.ID, rejectReason)
 	if err != nil {
 		t.Fatalf("Failed to process reject: %v", err)
 	}
-	
+
 	// Order should be rejected
 	rejectedOrder, err := manager.GetOrder(ctx, order.ID)
 	if err != nil {
 		t.Fatalf("Failed to get rejected order: %v", err)
 	}
-	
+
 	if rejectedOrder.Status != domain.OrderStatusRejected {
 		t.Errorf("Expected status REJECTED, got %s", rejectedOrder.Status.String())
 	}
@@ -297,13 +297,13 @@ func TestOrderManagerGetOrdersByStatus(t *testing.T) {
 	// This test will FAIL - OrderManager doesn't exist yet
 	ctx := context.Background()
 	manager := NewOrderManager()
-	
+
 	// Submit multiple orders with different statuses
 	asset := &domain.Asset{
 		Symbol:    "NFLX",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	// Create pending orders
 	for i := 0; i < 3; i++ {
 		order := &domain.Order{
@@ -318,40 +318,40 @@ func TestOrderManagerGetOrdersByStatus(t *testing.T) {
 			CreatedAt:     time.Now(),
 			Status:        domain.OrderStatusPending,
 		}
-		
+
 		err := manager.SubmitOrder(ctx, order)
 		if err != nil {
 			t.Fatalf("Failed to submit order %d: %v", i, err)
 		}
 	}
-	
+
 	// Update some to submitted
 	err := manager.UpdateOrderStatus(ctx, "STATUS_TEST_0", domain.OrderStatusSubmitted)
 	if err != nil {
 		t.Fatalf("Failed to update order status: %v", err)
 	}
-	
+
 	err = manager.UpdateOrderStatus(ctx, "STATUS_TEST_1", domain.OrderStatusSubmitted)
 	if err != nil {
 		t.Fatalf("Failed to update order status: %v", err)
 	}
-	
+
 	// Get pending orders
 	pendingOrders, err := manager.GetOrdersByStatus(ctx, domain.OrderStatusPending)
 	if err != nil {
 		t.Fatalf("Failed to get pending orders: %v", err)
 	}
-	
+
 	if len(pendingOrders) != 1 {
 		t.Errorf("Expected 1 pending order, got %d", len(pendingOrders))
 	}
-	
+
 	// Get submitted orders
 	submittedOrders, err := manager.GetOrdersByStatus(ctx, domain.OrderStatusSubmitted)
 	if err != nil {
 		t.Fatalf("Failed to get submitted orders: %v", err)
 	}
-	
+
 	if len(submittedOrders) != 2 {
 		t.Errorf("Expected 2 submitted orders, got %d", len(submittedOrders))
 	}
@@ -361,12 +361,12 @@ func TestOrderManagerValidateTransition(t *testing.T) {
 	// This test will FAIL - OrderManager doesn't exist yet
 	ctx := context.Background()
 	manager := NewOrderManager()
-	
+
 	asset := &domain.Asset{
 		Symbol:    "NVDA",
 		AssetType: domain.AssetTypeStock,
 	}
-	
+
 	order := &domain.Order{
 		ID:            "VALIDATE_TEST_001",
 		Asset:         asset,
@@ -378,33 +378,33 @@ func TestOrderManagerValidateTransition(t *testing.T) {
 		CreatedAt:     time.Now(),
 		Status:        domain.OrderStatusPending,
 	}
-	
+
 	err := manager.SubmitOrder(ctx, order)
 	if err != nil {
 		t.Fatalf("Failed to submit order: %v", err)
 	}
-	
+
 	// Test valid transitions
 	validTransitions := []domain.OrderStatus{
 		domain.OrderStatusSubmitted,
 		domain.OrderStatusCancelled,
 		domain.OrderStatusRejected,
 	}
-	
+
 	for _, newStatus := range validTransitions {
 		err = manager.ValidateOrderTransition(ctx, order.ID, newStatus)
 		if err != nil {
 			t.Errorf("Expected valid transition from PENDING to %s, but got error: %v", newStatus.String(), err)
 		}
 	}
-	
+
 	// Test invalid transitions
 	invalidTransitions := []domain.OrderStatus{
 		domain.OrderStatusFilled,
 		domain.OrderStatusPartiallyFilled,
 		domain.OrderStatusExpired,
 	}
-	
+
 	for _, newStatus := range invalidTransitions {
 		err = manager.ValidateOrderTransition(ctx, order.ID, newStatus)
 		if err == nil {
