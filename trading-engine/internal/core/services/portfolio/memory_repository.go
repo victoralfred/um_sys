@@ -51,7 +51,7 @@ func (r *MemoryRepository) Save(ctx context.Context, portfolio *domain.Portfolio
 		portfolioCopy.Positions[id] = &positionCopy
 	}
 
-	for symbol, _ := range portfolio.AssetPositions {
+	for symbol := range portfolio.AssetPositions {
 		// Find the corresponding position in Positions map
 		for _, p := range portfolioCopy.Positions {
 			if p.Asset.Symbol == symbol {
@@ -90,7 +90,7 @@ func (r *MemoryRepository) FindByID(ctx context.Context, id string) (*domain.Por
 		portfolioCopy.Positions[id] = &positionCopy
 	}
 
-	for symbol, _ := range portfolio.AssetPositions {
+	for symbol := range portfolio.AssetPositions {
 		// Find the corresponding position in Positions map
 		for _, p := range portfolioCopy.Positions {
 			if p.Asset.Symbol == symbol {

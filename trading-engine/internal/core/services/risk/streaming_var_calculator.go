@@ -14,7 +14,6 @@ type StreamingVaRCalculator struct {
 	quantileEstimator *P2QuantileEstimator
 	cache             *VaRCache
 	config            VaRConfig
-	mu                sync.RWMutex
 }
 
 // NewStreamingVaRCalculator creates a new streaming VaR calculator

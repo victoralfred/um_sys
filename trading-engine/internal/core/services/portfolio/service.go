@@ -33,7 +33,6 @@ type Service struct {
 
 	// Event handlers
 	onPositionUpdate func(*domain.Portfolio, *domain.Position)
-	onOrderExecuted  func(*ports.ExecutionResult)
 
 	// Configuration
 	config ServiceConfig

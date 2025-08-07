@@ -198,7 +198,7 @@ func TestMonteCarloCVaRCalculation(t *testing.T) {
 	}
 
 	// Monte Carlo should provide detailed simulation statistics
-	if cvarResult.MonteCarloDetails.TailScenarios == nil || len(cvarResult.MonteCarloDetails.TailScenarios) == 0 {
+	if len(cvarResult.MonteCarloDetails.TailScenarios) == 0 {
 		t.Error("Expected tail scenarios to be captured")
 	}
 

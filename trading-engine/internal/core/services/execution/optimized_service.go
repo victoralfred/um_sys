@@ -18,16 +18,9 @@ type OptimizedExecutionService struct {
 	engine    ports.ExecutionEngine
 	validator ports.OrderValidator
 
-	// Lock-free counters using atomic operations
-	totalOrdersSubmitted uint64
-	totalOrdersProcessed uint64
-	totalOrdersRejected  uint64
-
 	// Ring buffer for order storage (lock-free for single producer/consumer)
 	orderRingBuffer []unsafe.Pointer // Stores *domain.Order
 	ringBufferSize  uint64
-	ringBufferHead  uint64 // Next write position
-	ringBufferTail  uint64 // Next read position
 
 	// Sharded maps to reduce lock contention
 	orderShards []*OrderShard
@@ -497,7 +490,7 @@ func (s *OptimizedExecutionService) metricsLoop() {
 	defer ticker.Stop()
 
 	var lastProcessed uint64
-	var lastTime time.Time = time.Now()
+	lastTime := time.Now()
 
 	for {
 		select {

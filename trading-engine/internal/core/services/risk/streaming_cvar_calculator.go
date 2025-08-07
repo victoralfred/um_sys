@@ -14,7 +14,6 @@ type StreamingCVaRCalculator struct {
 	quantileEstimator *P2QuantileEstimator
 	cache             *VaRCache // Reuse existing cache
 	config            CVaRConfig
-	mu                sync.RWMutex
 }
 
 // NewStreamingCVaRCalculator creates a new streaming CVaR calculator
@@ -114,8 +113,8 @@ func (scvc *StreamingCVaRCalculator) calculateStreamingQuantile(returns []types.
 
 // calculateStreamingTailExpectation computes the conditional expectation of tail in O(n)
 func (scvc *StreamingCVaRCalculator) calculateStreamingTailExpectation(returns []types.Decimal, threshold types.Decimal) types.Decimal {
-	var tailSum types.Decimal = types.NewDecimalFromInt(0)
-	var tailCount int = 0
+	tailSum := types.NewDecimalFromInt(0)
+	tailCount := 0
 
 	// Single pass through data to find tail observations and compute mean
 	for _, ret := range returns {
@@ -134,9 +133,9 @@ func (scvc *StreamingCVaRCalculator) calculateStreamingTailExpectation(returns [
 
 // calculateTailStatistics computes tail-specific statistics in single O(n) pass
 func (scvc *StreamingCVaRCalculator) calculateTailStatistics(returns []types.Decimal, threshold types.Decimal) CVaRTailStatistics {
-	var tailSum types.Decimal = types.NewDecimalFromInt(0)
-	var tailSumSquares types.Decimal = types.NewDecimalFromInt(0)
-	var tailCount int = 0
+	tailSum := types.NewDecimalFromInt(0)
+	tailSumSquares := types.NewDecimalFromInt(0)
+	tailCount := 0
 	var worstLoss types.Decimal = threshold
 
 	// Single pass to collect tail statistics
