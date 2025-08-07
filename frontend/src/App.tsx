@@ -97,7 +97,7 @@ const [showAdminPanel, setShowAdminPanel] = createSignal(false);
 const [notifications, setNotifications] = createStore([]);
 const [notificationId, setNotificationId] = createSignal(1);
 
-const addNotification = (message, type = 'info', duration = 5000) => {
+const addNotification = (message: string, type = 'info', duration = 5000) => {
   const id = notificationId();
   setNotificationId(id + 1);
   
@@ -112,14 +112,16 @@ const addNotification = (message, type = 'info', duration = 5000) => {
   setNotifications([...notifications, notification]);
   
   // Auto-remove notification
-  window.setTimeout(() => {
-    removeNotification(id);
-  }, duration);
+  if (typeof window !== 'undefined') {
+    window.setTimeout(() => {
+      removeNotification(id);
+    }, duration);
+  }
   
   return id;
 };
 
-const removeNotification = (id) => {
+const removeNotification = (id: number) => {
   setNotifications(notifications.filter(n => n.id !== id));
 };
 
@@ -137,7 +139,7 @@ const [selectedUsers, setSelectedUsers] = createSignal([]);
 // Dark mode state - initialize from localStorage
 const [darkMode, setDarkMode] = createSignal(() => {
   try {
-    return localStorage.getItem('umanager-dark-mode') === 'true';
+    return window.localStorage.getItem('umanager-dark-mode') === 'true';
   } catch {
     return false;
   }
@@ -149,7 +151,6 @@ const [simulationInterval, setSimulationInterval] = createSignal(null);
 
 // Keyboard shortcuts state
 const [showShortcuts, setShowShortcuts] = createSignal(false);
-const [keyboardEnabled, setKeyboardEnabled] = createSignal(true);
 
 // Performance monitoring
 const [performanceMetrics, setPerformanceMetrics] = createStore({
@@ -237,7 +238,7 @@ const getTheme = () => {
 };
 
 // Activity tracking functions
-const logActivity = (userId, action, details) => {
+const logActivity = (userId: number, action: string, details: string) => {
   const newActivity = {
     id: Math.max(...activityLog.map(a => a.id), 0) + 1,
     userId,
@@ -248,12 +249,12 @@ const logActivity = (userId, action, details) => {
   setActivityLog([newActivity, ...activityLog]);
 };
 
-const getUserName = (userId) => {
+const getUserName = (userId: number) => {
   const user = users.find(u => u.id === userId);
   return user ? user.name : 'Unknown User';
 };
 
-const formatTimeAgo = (timestamp) => {
+const formatTimeAgo = (timestamp: string) => {
   const now = new Date();
   const time = new Date(timestamp);
   const diffInHours = Math.floor((now - time) / (1000 * 60 * 60));
@@ -324,7 +325,7 @@ const stopRealtimeSimulation = () => {
 };
 
 // Keyboard shortcuts system
-const handleKeyboardShortcuts = (event) => {
+const handleKeyboardShortcuts = (event: KeyboardEvent) => {
   if (!keyboardEnabled()) return;
   
   const { key, ctrlKey, metaKey, altKey, shiftKey } = event;
@@ -350,7 +351,7 @@ const handleKeyboardShortcuts = (event) => {
       if (isCmd) {
         event.preventDefault();
         const newMode = !darkMode();
-        setDarkMode(newMode);
+        updateDarkMode(newMode);
         addNotification(`Switched to ${newMode ? 'dark' : 'light'} mode via keyboard`, 'success');
       }
     },
@@ -414,20 +415,22 @@ const handleKeyboardShortcuts = (event) => {
 };
 
 // Initialize keyboard shortcuts
-window.addEventListener('keydown', handleKeyboardShortcuts);
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', handleKeyboardShortcuts);
+}
 
 // LocalStorage persistence functions
-const saveToLocalStorage = (key, data) => {
+const saveToLocalStorage = (key: string, data: unknown) => {
   try {
-    localStorage.setItem(`umanager-${key}`, JSON.stringify(data));
+    window.localStorage.setItem(`umanager-${key}`, JSON.stringify(data));
   } catch (error) {
     console.warn('Failed to save to localStorage:', error);
   }
 };
 
-const loadFromLocalStorage = (key, defaultValue = null) => {
+const loadFromLocalStorage = (key: string, defaultValue: unknown = null) => {
   try {
-    const item = localStorage.getItem(`umanager-${key}`);
+    const item = window.localStorage.getItem(`umanager-${key}`);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
     console.warn('Failed to load from localStorage:', error);
@@ -436,12 +439,18 @@ const loadFromLocalStorage = (key, defaultValue = null) => {
 };
 
 // Save preferences whenever they change
-const saveDarkMode = (mode) => {
+const saveDarkMode = (mode: boolean) => {
   try {
-    localStorage.setItem('umanager-dark-mode', mode.toString());
+    window.localStorage.setItem('umanager-dark-mode', mode.toString());
   } catch (error) {
     console.warn('Failed to save dark mode preference:', error);
   }
+};
+
+// Use the function to save dark mode changes
+const updateDarkMode = (newMode: boolean) => {
+  setDarkMode(newMode);
+  saveDarkMode(newMode);
 };
 
 // Save user data periodically
@@ -472,21 +481,24 @@ const loadUserData = () => {
 };
 
 // Auto-save every 30 seconds
-window.setInterval(() => {
-  if (users.length > 0) {
-    saveUserData();
-  }
-}, 30000);
+if (typeof window !== 'undefined') {
+  window.setInterval(() => {
+    if (users.length > 0) {
+      saveUserData();
+    }
+  }, 30000);
+}
 
 // Load data on app start
-window.setTimeout(() => {
-  loadUserData();
-}, 1000);
+if (typeof window !== 'undefined') {
+  window.setTimeout(() => {
+    loadUserData();
+  }, 1000);
+}
 
 // Performance Monitoring Functions
 const updatePerformanceMetrics = () => {
   const now = Date.now();
-  const timeDiff = now - performanceMetrics.lastUpdate;
   
   // Simulate memory usage (in MB)
   const memoryUsage = Math.floor(15 + Math.random() * 25);
@@ -529,37 +541,41 @@ const updatePerformanceMetrics = () => {
 };
 
 // Start performance monitoring
-window.setInterval(() => {
-  updatePerformanceMetrics();
-}, 2000);
+if (typeof window !== 'undefined') {
+  window.setInterval(() => {
+    updatePerformanceMetrics();
+  }, 2000);
+}
 
 // Initial performance update
-window.setTimeout(() => {
-  updatePerformanceMetrics();
-}, 500);
+if (typeof window !== 'undefined') {
+  window.setTimeout(() => {
+    updatePerformanceMetrics();
+  }, 500);
+}
 
 // Feature Flag Management Functions
-const toggleFeatureFlag = (flagName) => {
+const toggleFeatureFlag = (flagName: string) => {
   setFeatureFlags(flagName, !featureFlags[flagName]);
   saveToLocalStorage('feature-flags', featureFlags);
   addNotification(`Feature "${flagName}" ${featureFlags[flagName] ? 'enabled' : 'disabled'}`, 'info');
 };
 
 // Background Job Management Functions
-const toggleBackgroundJob = (jobName) => {
+const toggleBackgroundJob = (jobName: string) => {
   setBackgroundJobs(jobName, 'enabled', !backgroundJobs[jobName].enabled);
   setBackgroundJobs(jobName, 'status', backgroundJobs[jobName].enabled ? 'disabled' : 'idle');
   saveToLocalStorage('background-jobs', backgroundJobs);
   addNotification(`Background job "${jobName}" ${backgroundJobs[jobName].enabled ? 'enabled' : 'disabled'}`, backgroundJobs[jobName].enabled ? 'success' : 'warning');
 };
 
-const updateJobInterval = (jobName, newInterval) => {
+const updateJobInterval = (jobName: string, newInterval: number) => {
   setBackgroundJobs(jobName, 'interval', newInterval);
   saveToLocalStorage('background-jobs', backgroundJobs);
   addNotification(`Updated ${jobName} interval to ${newInterval} seconds`, 'info');
 };
 
-const getJobStatusColor = (status) => {
+const getJobStatusColor = (status: string) => {
   switch (status) {
     case 'running': return '#10B981';
     case 'idle': return '#F59E0B';
@@ -569,7 +585,7 @@ const getJobStatusColor = (status) => {
   }
 };
 
-const formatLastRun = (timestamp) => {
+const formatLastRun = (timestamp: number) => {
   const now = Date.now();
   const diff = now - timestamp;
   const minutes = Math.floor(diff / 60000);
@@ -582,7 +598,8 @@ const formatLastRun = (timestamp) => {
 };
 
 // Load feature flags and background jobs from localStorage
-window.setTimeout(() => {
+if (typeof window !== 'undefined') {
+  window.setTimeout(() => {
   const savedFlags = loadFromLocalStorage('feature-flags');
   const savedJobs = loadFromLocalStorage('background-jobs');
   
@@ -601,7 +618,8 @@ window.setTimeout(() => {
       }
     });
   }
-}, 100);
+  }, 100);
+}
 
 // Keyboard Shortcuts Help Panel
 const KeyboardShortcutsPanel = () => {
@@ -999,7 +1017,7 @@ const PerformanceMonitorPanel = () => {
                 <span style="margin-right: 8px;">📊</span> Performance History
               </h3>
               <div style="display: flex; align-items: end; gap: 4px; height: 80px; margin-bottom: 8px;">
-                <For each={performanceMetrics.history}>{(entry, index) => 
+                <For each={performanceMetrics.history}>{(entry) => 
                   <div 
                     style={`background: ${statusColors[entry.renderTime <= 10 ? 'good' : entry.renderTime <= 15 ? 'caution' : 'warning']}; width: 20px; height: ${Math.min(entry.renderTime * 4, 80)}px; border-radius: 2px; opacity: 0.7; transition: opacity 0.2s;`}
                     title={`${formatTime(entry.renderTime)} at ${new Date(entry.timestamp).toLocaleTimeString()}`}
@@ -1322,9 +1340,11 @@ const AdminSettingsPanel = () => {
                 <button
                   onclick={() => {
                     addNotification('Export started - this may take a few moments', 'info');
-                    window.setTimeout(() => {
-                      addNotification('System data exported successfully', 'success');
-                    }, 2000);
+                    if (typeof window !== 'undefined') {
+                      window.setTimeout(() => {
+                        addNotification('System data exported successfully', 'success');
+                      }, 2000);
+                    }
                   }}
                   style={`padding: 10px 20px; background: ${theme.status.info}; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;`}
                 >
