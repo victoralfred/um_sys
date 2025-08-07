@@ -11,6 +11,7 @@ import (
 // ExecutionResult represents the result of order execution
 type ExecutionResult struct {
 	OrderID       string        `json:"order_id"`
+	PortfolioID   string        `json:"portfolio_id,omitempty"`
 	ExecutedAt    time.Time     `json:"executed_at"`
 	AveragePrice  types.Decimal `json:"average_price"`
 	TotalQuantity types.Decimal `json:"total_quantity"`
