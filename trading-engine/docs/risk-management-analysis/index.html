@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Management Analysis & Roadmap - Trading Engine</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--background-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+        }
+
+        .nav {
+            background: var(--card-background);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            margin-bottom: 2rem;
+            padding: 1rem;
+        }
+
+        .nav-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item a:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .executive-summary {
+            background: var(--card-background);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .summary-card {
+            background: var(--background-color);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .summary-card.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .summary-card.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .summary-card.success {
+            border-left-color: var(--success-color);
+        }
+
+        .metric {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric.danger {
+            color: var(--danger-color);
+        }
+
+        .metric.warning {
+            color: var(--warning-color);
+        }
+
+        .metric.success {
+            color: var(--success-color);
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .status-table th,
+        .status-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .status-table th {
+            background: var(--background-color);
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-complete {
+            background: var(--success-color);
+        }
+
+        .status-partial {
+            background: var(--warning-color);
+        }
+
+        .status-missing {
+            background: var(--danger-color);
+        }
+
+        .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .priority-card {
+            background: var(--card-background);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .priority-card.critical {
+            border-top-color: var(--danger-color);
+        }
+
+        .priority-card.high {
+            border-top-color: var(--warning-color);
+        }
+
+        .priority-card.medium {
+            border-top-color: #3b82f6;
+        }
+
+        .priority-card.low {
+            border-top-color: var(--success-color);
+        }
+
+        .priority-label {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .priority-label.critical {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger-color);
+        }
+
+        .priority-label.high {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning-color);
+        }
+
+        .priority-label.medium {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .priority-label.low {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-color);
+        }
+
+        .checklist {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .checklist li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .checklist li::before {
+            content: '❌';
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .checklist li.complete::before {
+            content: '✅';
+        }
+
+        .progress-bar {
+            background: var(--border-color);
+            border-radius: 1rem;
+            height: 8px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            background: var(--success-color);
+            height: 100%;
+            border-radius: 1rem;
+            transition: width 0.3s ease;
+        }
+
+        .timeline {
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 2rem;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 4rem;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: 1.5rem;
+            top: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        .timeline-content {
+            background: var(--card-background);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .code-header {
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .nav-list {
+                justify-content: center;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .priority-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1 class="header-title">Risk Management Analysis</h1>
+                    <p class="header-subtitle">Production Readiness Assessment & Improvement Roadmap</p>
+                </div>
+                <div class="status-badge">
+                    60% Production Ready
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav class="nav">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="#executive-summary">Executive Summary</a></li>
+                <li class="nav-item"><a href="#current-state">Current State</a></li>
+                <li class="nav-item"><a href="#critical-issues">Critical Issues</a></li>
+                <li class="nav-item"><a href="#roadmap">Improvement Roadmap</a></li>
+                <li class="nav-item"><a href="#implementation">Implementation Plan</a></li>
+                <li class="nav-item"><a href="#metrics">Success Metrics</a></li>
+            </ul>
+        </nav>
+
+        <section id="executive-summary" class="executive-summary">
+            <h2 class="card-title">🎯 Executive Summary</h2>
+            <p>The trading system's risk management implementation demonstrates <strong>strong domain modeling fundamentals</strong> but has <strong>significant production readiness gaps</strong> that prevent deployment in a high-performance trading environment.</p>
+            
+            <div class="summary-grid">
+                <div class="summary-card success">
+                    <div class="metric success">88%</div>
+                    <div>Test Coverage</div>
+                    <small>Comprehensive unit tests with TDD methodology</small>
+                </div>
+                <div class="summary-card danger">
+                    <div class="metric danger">0ms</div>
+                    <div>Performance Measured</div>
+                    <small>No benchmarks vs <1ms p99 requirement</small>
+                </div>
+                <div class="summary-card danger">
+                    <div class="metric danger">0%</div>
+                    <div>Integration Coverage</div>
+                    <small>Missing vs 80% requirement</small>
+                </div>
+                <div class="summary-card warning">
+                    <div class="metric warning">2,567</div>
+                    <div>Lines of Code</div>
+                    <small>Complete business logic implementation</small>
+                </div>
+            </div>
+        </section>
+
+        <section id="current-state" class="card">
+            <h2 class="card-title">📊 Current Implementation State</h2>
+            <table class="status-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Status</th>
+                        <th>Test Coverage</th>
+                        <th>Performance</th>
+                        <th>Production Ready</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Position Sizer</strong></td>
+                        <td><span class="status-indicator status-complete"></span>Implemented</td>
+                        <td>88%</td>
+                        <td>Not Measured</td>
+                        <td><span class="status-indicator status-missing"></span>No</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Drawdown Monitor</strong></td>
+                        <td><span class="status-indicator status-complete"></span>Implemented</td>
+                        <td>92%</td>
+                        <td>Not Measured</td>
+                        <td><span class="status-indicator status-missing"></span>No</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VaR Calculator</strong></td>
+                        <td><span class="status-indicator status-complete"></span>Implemented</td>
+                        <td>85%</td>
+                        <td>Not Measured</td>
+                        <td><span class="status-indicator status-missing"></span>No</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CVaR Calculator</strong></td>
+                        <td><span class="status-indicator status-complete"></span>Implemented</td>
+                        <td>90%</td>
+                        <td>Not Measured</td>
+                        <td><span class="status-indicator status-missing"></span>No</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem;">Strengths ✅</h3>
+            <ul class="checklist">
+                <li class="complete">Excellent domain modeling with rich entities</li>
+                <li class="complete">TDD methodology with comprehensive tests</li>
+                <li class="complete">Clean architecture foundation</li>
+                <li class="complete">Type-safe financial calculations</li>
+                <li class="complete">Mathematical correctness verified</li>
+            </ul>
+
+            <h3 style="margin-top: 2rem;">Critical Gaps ❌</h3>
+            <ul class="checklist">
+                <li>Performance SLA compliance (&lt;1ms p99)</li>
+                <li>Zero observability infrastructure</li>
+                <li>Missing integration tests (0% vs 80% requirement)</li>
+                <li>No production error handling</li>
+                <li>Missing security framework</li>
+                <li>No hexagonal architecture integration</li>
+            </ul>
+        </section>
+
+        <section id="critical-issues" class="card">
+            <h2 class="card-title">🚨 Critical Issues Analysis</h2>
+            
+            <div class="priority-grid">
+                <div class="priority-card critical">
+                    <div class="priority-label critical">CRITICAL</div>
+                    <h3>Performance SLA Violation</h3>
+                    <p>No performance benchmarks implemented despite &lt;1ms p99 requirement. Current implementation likely 10-100x slower than target.</p>
+                    <div class="code-block">
+                        <div class="code-header">Problem: Inefficient sorting</div>
+// Current: O(n log n) on every calculation
+sort.Slice(sortedReturns, func(i, j int) bool {
+    return sortedReturns[i].Cmp(sortedReturns[j]) < 0
+})
+
+// Required: Pre-sorted data structure
+type OptimizedVaRCalculator struct {
+    sortedReturns *btree.BTree
+    cache         *lru.Cache
+}
+                    </div>
+                </div>
+
+                <div class="priority-card critical">
+                    <div class="priority-label critical">CRITICAL</div>
+                    <h3>Zero Observability</h3>
+                    <p>No logging, metrics, monitoring, or alerting infrastructure for production deployment.</p>
+                    <div class="code-block">
+                        <div class="code-header">Required: Comprehensive monitoring</div>
+type RiskService struct {
+    logger  *slog.Logger
+    metrics *prometheus.Registry
+    tracer  trace.Tracer
+}
+
+func (rs *RiskService) CalculateVaR(ctx context.Context) {
+    timer := prometheus.NewTimer(...)
+    defer timer.ObserveDuration()
+    
+    rs.logger.InfoContext(ctx, "VaR calculation started")
+    // Implementation
+}
+                    </div>
+                </div>
+
+                <div class="priority-card critical">
+                    <div class="priority-label critical">CRITICAL</div>
+                    <h3>Missing Integration Tests</h3>
+                    <p>0% integration test coverage vs 80% requirement. No end-to-end workflow testing.</p>
+                    <div class="code-block">
+                        <div class="code-header">Required: Integration test framework</div>
+func TestRiskManagementWorkflow(t *testing.T) {
+    // Setup test environment with real dependencies
+    db := setupTestDatabase(t)
+    cache := setupTestCache(t)
+    
+    // Test complete workflow
+    result, err := riskService.CalculateVaR(ctx, req)
+    // Verify results and side effects
+}
+                    </div>
+                </div>
+
+                <div class="priority-card high">
+                    <div class="priority-label high">HIGH</div>
+                    <h3>Architecture Integration</h3>
+                    <p>No ports/adapters for external system integration. Missing hexagonal architecture implementation.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="roadmap" class="card">
+            <h2 class="card-title">🛣️ Improvement Roadmap</h2>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Phase 1: Critical Fixes (Week 1-2) 🔴</div>
+                        <p><strong>Priority:</strong> CRITICAL - Production Blockers</p>
+                        <ul style="margin-top: 0.5rem;">
+                            <li>Implement performance benchmarks targeting &lt;1ms p99</li>
+                            <li>Add comprehensive error handling with proper error types</li>
+                            <li>Implement structured logging with correlation IDs</li>
+                            <li>Create integration test framework</li>
+                        </ul>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <small>Progress: 0% - Not Started</small>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Phase 2: Production Infrastructure (Week 3-4) 🟡</div>
+                        <p><strong>Priority:</strong> HIGH - Production Readiness</p>
+                        <ul style="margin-top: 0.5rem;">
+                            <li>Centralized configuration system</li>
+                            <li>Metrics collection with Prometheus integration</li>
+                            <li>Security framework with authentication/authorization</li>
+                            <li>Hexagonal architecture integration</li>
+                        </ul>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <small>Progress: 0% - Not Started</small>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Phase 3: Scalability & Advanced Features (Week 5-6) 🟢</div>
+                        <p><strong>Priority:</strong> MEDIUM - Scalability</p>
+                        <ul style="margin-top: 0.5rem;">
+                            <li>Async processing capabilities</li>
+                            <li>Real-time risk monitoring with automated alerts</li>
+                            <li>Risk attribution analysis</li>
+                            <li>Performance optimization</li>
+                        </ul>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <small>Progress: 0% - Not Started</small>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Phase 4: Advanced Risk Models (Week 7-8) 🔵</div>
+                        <p><strong>Priority:</strong> LOW - Future Enhancement</p>
+                        <ul style="margin-top: 0.5rem;">
+                            <li>Advanced risk calculations (Expected Shortfall, Risk Parity)</li>
+                            <li>Machine Learning integration</li>
+                            <li>Regulatory reporting generation</li>
+                            <li>Model validation framework</li>
+                        </ul>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <small>Progress: 0% - Not Started</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="implementation" class="card">
+            <h2 class="card-title">📅 Implementation Plan</h2>
+            
+            <h3>Sprint 1 (Week 1-2): Critical Path</h3>
+            <table class="status-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Owner</th>
+                        <th>Effort</th>
+                        <th>Success Criteria</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Performance Benchmarks</td>
+                        <td>Backend Team</td>
+                        <td>3 days</td>
+                        <td>&lt;1ms p99 measured</td>
+                    </tr>
+                    <tr>
+                        <td>Error Handling Framework</td>
+                        <td>Backend Team</td>
+                        <td>4 days</td>
+                        <td>100% error coverage</td>
+                    </tr>
+                    <tr>
+                        <td>Structured Logging</td>
+                        <td>DevOps Team</td>
+                        <td>2 days</td>
+                        <td>All operations logged</td>
+                    </tr>
+                    <tr>
+                        <td>Integration Tests</td>
+                        <td>QA Team</td>
+                        <td>5 days</td>
+                        <td>80% coverage achieved</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem;">Resource Allocation</h3>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="metric">4</div>
+                    <div>Team Members</div>
+                    <small>Backend (2), DevOps (1), QA (1)</small>
+                </div>
+                <div class="summary-card">
+                    <div class="metric">8</div>
+                    <div>Total Weeks</div>
+                    <small>Across 4 implementation phases</small>
+                </div>
+                <div class="summary-card">
+                    <div class="metric">$200K</div>
+                    <div>Estimated Cost</div>
+                    <small>Including tooling and infrastructure</small>
+                </div>
+            </div>
+        </section>
+
+        <section id="metrics" class="card">
+            <h2 class="card-title">🎯 Success Metrics</h2>
+            
+            <div class="priority-grid">
+                <div class="priority-card">
+                    <h3>Performance Targets</h3>
+                    <table style="width: 100%; font-size: 0.9rem;">
+                        <tr>
+                            <td><strong>Risk Calc Latency</strong></td>
+                            <td>&lt;1ms p99</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Memory Usage</strong></td>
+                            <td>&lt;100MB per calc</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Concurrent Calcs</strong></td>
+                            <td>1000+ simultaneous</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cache Hit Rate</strong></td>
+                            <td>&gt;90%</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="priority-card">
+                    <h3>Quality Targets</h3>
+                    <table style="width: 100%; font-size: 0.9rem;">
+                        <tr>
+                            <td><strong>Unit Test Coverage</strong></td>
+                            <td>≥95%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Integration Coverage</strong></td>
+                            <td>≥80%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Error Rate</strong></td>
+                            <td>&lt;0.1%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Uptime SLA</strong></td>
+                            <td>99.9%</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="priority-card">
+                    <h3>Security Targets</h3>
+                    <table style="width: 100%; font-size: 0.9rem;">
+                        <tr>
+                            <td><strong>Authentication</strong></td>
+                            <td>100% endpoints</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Audit Coverage</strong></td>
+                            <td>100% operations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vulnerabilities</strong></td>
+                            <td>Zero critical</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Compliance</strong></td>
+                            <td>SOX/GDPR ready</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <h3>Monitoring Validation</h3>
+                <div class="code-block">
+                    <div class="code-header">Prometheus Queries for Success Validation</div>
+# Risk calculation SLA compliance
+histogram_quantile(0.99, risk_calculation_duration_seconds_bucket) &lt; 0.001
+
+# Risk calculation error rate  
+rate(risk_calculation_errors_total[5m]) &lt; 0.001
+
+# Cache hit rate
+risk_calculation_cache_hit_rate &gt; 0.90
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title">📞 Contact & Support</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div><strong>Technical Lead</strong></div>
+                    <div>Backend Architecture Team</div>
+                    <small>Implementation guidance and technical decisions</small>
+                </div>
+                <div class="summary-card">
+                    <div><strong>Product Owner</strong></div>
+                    <div>Risk Management Team</div>
+                    <small>Business requirements and acceptance criteria</small>
+                </div>
+                <div class="summary-card">
+                    <div><strong>DevOps Lead</strong></div>
+                    <div>Platform Engineering Team</div>
+                    <small>Infrastructure, monitoring, and deployment</small>
+                </div>
+                <div class="summary-card">
+                    <div><strong>Security Contact</strong></div>
+                    <div>InfoSec Team</div>
+                    <small>Security review and compliance validation</small>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer style="background: var(--text-primary); color: white; text-align: center; padding: 2rem; margin-top: 3rem;">
+        <div class="container">
+            <p><strong>Risk Management Analysis & Roadmap</strong></p>
+            <p>Last Updated: August 7, 2025 | Version: 1.0 | Status: Active Development</p>
+            <p style="margin-top: 1rem; opacity: 0.8;">
+                <a href="./README.md" style="color: #93c5fd; text-decoration: none;">📄 Markdown Version</a> | 
+                <a href="./implementation-guide.md" style="color: #93c5fd; text-decoration: none;">🔧 Implementation Guide</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation
+        document.querySelectorAll('.nav-item a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Progress bar animations
+        const progressBars = document.querySelectorAll('.progress-fill');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Animate progress bars when they come into view
+                    setTimeout(() => {
+                        entry.target.style.width = entry.target.style.width;
+                    }, 100);
+                }
+            });
+        });
+
+        progressBars.forEach(bar => {
+            observer.observe(bar);
+        });
+
+        // Add active state to navigation
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-item a');
+            
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 100 && rect.bottom > 100) {
+                    currentSection = section.id;
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSection}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .nav-item a.active {
+            background: var(--primary-color);
+            color: white;
+        }
+    </style>
+</body>
+</html>

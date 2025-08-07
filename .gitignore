@@ -65,5 +65,6 @@ frontend/.env
 frontend/.env.example
 frontend/dev.log
 
-# Documentation (keep local)
+# Documentation (keep local - but allow specific analysis docs)
 docs/
+!docs/risk-management-analysis/
