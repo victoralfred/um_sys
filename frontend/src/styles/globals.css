@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+  
+  body {
+    @apply bg-ds-background text-ds-text font-sans;
+    font-size: 14px;
+    line-height: 1.42857;
+  }
+
+  /* Focus styles following Atlassian design system */
+  *:focus {
+    outline: 2px solid #0065FF;
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus for mouse users */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer components {
+  /* Button base styles */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-ds-14 font-medium rounded-ds border border-transparent transition-colors duration-150 ease-in-out;
+    @apply focus:outline-none focus:ring-2 focus:ring-ds-border-focused focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-xs {
+    @apply px-2 py-1 text-ds-11;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1 text-ds-12;
+  }
+
+  .btn-lg {
+    @apply px-5 py-3 text-ds-16;
+  }
+
+  .btn-xl {
+    @apply px-6 py-4 text-ds-16;
+  }
+
+  .btn-loading {
+    @apply cursor-wait;
+  }
+
+  .btn-primary {
+    @apply bg-ds-brand-bold text-white hover:bg-ds-brand-boldest;
+    @apply focus:ring-ds-brand-bold;
+  }
+
+  .btn-secondary {
+    @apply bg-white border-ds-border text-ds-text hover:bg-ds-background-subtle;
+    @apply focus:ring-ds-border-focused;
+  }
+
+  .btn-danger {
+    @apply bg-ds-danger-bold text-white hover:bg-ds-danger-boldest;
+    @apply focus:ring-ds-danger-bold;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-ds-text hover:bg-ds-background-subtle;
+    @apply focus:ring-ds-border-focused;
+  }
+
+  /* Form input styles */
+  .form-input {
+    @apply block w-full px-3 py-2 text-ds-14 border border-ds-border-input rounded-ds;
+    @apply focus:outline-none focus:ring-2 focus:ring-ds-border-focused focus:border-ds-border-focused;
+    @apply disabled:bg-ds-background-disabled disabled:text-ds-text-disabled;
+    @apply placeholder:text-ds-text-subtlest;
+  }
+
+  .form-input--error {
+    @apply border-ds-danger-bold focus:ring-ds-danger-bold focus:border-ds-danger-bold;
+  }
+
+  .form-label {
+    @apply block text-ds-14 font-medium text-ds-text mb-1;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-ds-surface rounded-ds-md shadow-ds-card border border-ds-border;
+  }
+
+  .card-elevated {
+    @apply shadow-ds-overlay;
+  }
+
+  .card-outlined {
+    @apply shadow-none border-2;
+  }
+
+  /* Card padding variants */
+  .card-padding-none {
+    @apply p-0;
+  }
+
+  .card-padding-sm .card-header,
+  .card-padding-sm .card-body,
+  .card-padding-sm .card-footer {
+    @apply px-4 py-3;
+  }
+
+  .card-padding-lg .card-header,
+  .card-padding-lg .card-body,
+  .card-padding-lg .card-footer {
+    @apply px-8 py-6;
+  }
+
+  /* Card sections */
+  .card-header {
+    @apply px-6 py-4 border-b border-ds-border;
+  }
+
+  .card-body {
+    @apply px-6 py-4;
+  }
+
+  .card-footer {
+    @apply px-6 py-4 border-t border-ds-border bg-ds-background-subtle;
+  }
+
+  /* Section-specific padding overrides */
+  .card-header-padding-sm {
+    @apply px-4 py-3;
+  }
+
+  .card-header-padding-lg {
+    @apply px-8 py-6;
+  }
+
+  .card-body-padding-sm {
+    @apply px-4 py-3;
+  }
+
+  .card-body-padding-lg {
+    @apply px-8 py-6;
+  }
+
+  .card-footer-padding-sm {
+    @apply px-4 py-3;
+  }
+
+  .card-footer-padding-lg {
+    @apply px-8 py-6;
+  }
+
+  /* Status badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-1 text-ds-11 font-medium rounded-ds;
+  }
+
+  .badge-success {
+    @apply bg-ds-success-subtle text-ds-success-bold;
+  }
+
+  .badge-warning {
+    @apply bg-ds-warning-subtle text-ds-warning-bold;
+  }
+
+  .badge-danger {
+    @apply bg-ds-danger-subtle text-ds-danger-bold;
+  }
+
+  .badge-info {
+    @apply bg-ds-information-subtle text-ds-information-bold;
+  }
+
+  .badge-neutral {
+    @apply bg-ds-background-sunken text-ds-text-subtle;
+  }
+
+  /* Badge sizes */
+  .badge-sm {
+    @apply px-1 py-0.5 text-xs;
+  }
+
+  .badge-lg {
+    @apply px-3 py-1.5 text-ds-12;
+  }
+
+  /* Badge variants */
+  .badge-interactive {
+    @apply cursor-pointer transition-colors duration-150 hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ds-border-focused focus:ring-offset-1;
+  }
+
+  .badge-dot {
+    @apply w-2 h-2 rounded-full mr-1.5 flex-shrink-0;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply inline-block animate-spin rounded-full border-2 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite];
+  }
+}
+
+@layer utilities {
+  /* Text utilities */
+  .text-heading-xl {
+    @apply text-ds-35 font-medium text-ds-text;
+  }
+
+  .text-heading-lg {
+    @apply text-ds-29 font-medium text-ds-text;
+  }
+
+  .text-heading-md {
+    @apply text-ds-24 font-medium text-ds-text;
+  }
+
+  .text-heading-sm {
+    @apply text-ds-20 font-medium text-ds-text;
+  }
+
+  .text-body-lg {
+    @apply text-ds-16 text-ds-text;
+  }
+
+  .text-body {
+    @apply text-ds-14 text-ds-text;
+  }
+
+  .text-body-sm {
+    @apply text-ds-12 text-ds-text;
+  }
+
+  .text-caption {
+    @apply text-ds-11 text-ds-text-subtle;
+  }
+
+  /* Layout utilities */
+  .container-ds {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Animation utilities */
+  .fade-in {
+    @apply animate-fade-in;
+  }
+
+  .slide-up {
+    @apply animate-slide-up;
+  }
+
+  .slide-down {
+    @apply animate-slide-down;
+  }
+}
