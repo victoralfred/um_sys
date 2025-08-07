@@ -204,7 +204,7 @@ func TestOrderBuilder(t *testing.T) {
 
 func TestOrderStateTransitions(t *testing.T) {
 	asset := createTestAsset()
-	
+
 	order, _ := NewOrderBuilder().
 		ID("TEST-ORDER").
 		Asset(asset).
@@ -298,7 +298,7 @@ func TestOrderStateTransitions(t *testing.T) {
 
 func TestOrderCancelTransition(t *testing.T) {
 	asset := createTestAsset()
-	
+
 	order, _ := NewOrderBuilder().
 		ID("TEST-ORDER").
 		Asset(asset).
@@ -310,7 +310,7 @@ func TestOrderCancelTransition(t *testing.T) {
 
 	// Submit and then cancel
 	order.Submit()
-	
+
 	err := order.Cancel()
 	if err != nil {
 		t.Errorf("Cancel() failed: %v", err)
@@ -331,7 +331,7 @@ func TestOrderCancelTransition(t *testing.T) {
 
 func TestOrderRejectTransition(t *testing.T) {
 	asset := createTestAsset()
-	
+
 	order, _ := NewOrderBuilder().
 		ID("TEST-ORDER").
 		Asset(asset).
@@ -358,7 +358,7 @@ func TestOrderRejectTransition(t *testing.T) {
 
 func TestOrderFillValidation(t *testing.T) {
 	asset := createTestAsset()
-	
+
 	order, _ := NewOrderBuilder().
 		ID("TEST-ORDER").
 		Asset(asset).
@@ -440,7 +440,7 @@ func TestOrderFillValidation(t *testing.T) {
 
 func TestOrderUtilityMethods(t *testing.T) {
 	asset := createTestAsset()
-	
+
 	order, _ := NewOrderBuilder().
 		ID("TEST-ORDER").
 		Asset(asset).
@@ -505,7 +505,7 @@ func TestOrderUtilityMethods(t *testing.T) {
 
 func TestOrderExpiration(t *testing.T) {
 	asset := createTestAsset()
-	
+
 	// Test non-expiring order
 	order1, _ := NewOrderBuilder().
 		ID("TEST-ORDER-1").
@@ -546,7 +546,7 @@ func TestOrderExpiration(t *testing.T) {
 		Quantity(types.NewDecimalFromInt(100)).
 		Price(types.NewDecimalFromFloat(150.00)).
 		Build()
-	
+
 	// Set expiration time to past manually
 	pastTime := time.Now().Add(-1 * time.Hour)
 	order3.ExpiresAt = &pastTime
@@ -618,7 +618,7 @@ func TestTimeInForceString(t *testing.T) {
 
 func TestOrderValidation(t *testing.T) {
 	asset := createTestAsset()
-	
+
 	validOrder, _ := NewOrderBuilder().
 		ID("VALID-ORDER").
 		Asset(asset).
@@ -670,7 +670,7 @@ func BenchmarkOrderCreation(b *testing.B) {
 
 func BenchmarkOrderFill(b *testing.B) {
 	asset := createTestAsset()
-	
+
 	order, _ := NewOrderBuilder().
 		ID("BENCH-ORDER").
 		Asset(asset).
