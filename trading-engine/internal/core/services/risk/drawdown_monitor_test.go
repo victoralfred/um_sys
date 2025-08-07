@@ -218,7 +218,7 @@ func TestDrawdownAlerts(t *testing.T) {
 	config := DrawdownConfig{
 		AlertThresholds: []types.Decimal{
 			types.NewDecimalFromFloat(5.0),  // 5% alert
-			types.NewDecimalFromFloat(10.0), // 10% alert  
+			types.NewDecimalFromFloat(10.0), // 10% alert
 			types.NewDecimalFromFloat(15.0), // 15% alert
 		},
 		MaxAcceptableDrawdown: types.NewDecimalFromFloat(20.0), // 20% max

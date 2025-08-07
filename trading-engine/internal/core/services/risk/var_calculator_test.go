@@ -35,7 +35,7 @@ func TestHistoricalVaRCalculation(t *testing.T) {
 	}
 
 	portfolioValue := types.NewDecimalFromFloat(1000000.0) // $1M portfolio
-	confidence := types.NewDecimalFromFloat(95.0)           // 95% confidence level
+	confidence := types.NewDecimalFromFloat(95.0)          // 95% confidence level
 
 	varResult, err := calculator.CalculateHistoricalVaR(returns, portfolioValue, confidence)
 	if err != nil {
@@ -48,7 +48,7 @@ func TestHistoricalVaRCalculation(t *testing.T) {
 	}
 
 	if varResult.ConfidenceLevel.Cmp(confidence) != 0 {
-		t.Errorf("Expected confidence level %s, got %s", 
+		t.Errorf("Expected confidence level %s, got %s",
 			confidence.String(), varResult.ConfidenceLevel.String())
 	}
 
@@ -66,7 +66,7 @@ func TestHistoricalVaRCalculation(t *testing.T) {
 	maxExpected := types.NewDecimalFromFloat(0.0)   // Should not be positive
 
 	if varPercent.Cmp(minExpected) < 0 || varPercent.Cmp(maxExpected) > 0 {
-		t.Errorf("VaR percentage %s%% outside expected range [%s%%, %s%%]", 
+		t.Errorf("VaR percentage %s%% outside expected range [%s%%, %s%%]",
 			varPercent.String(), minExpected.String(), maxExpected.String())
 	}
 }
@@ -89,7 +89,7 @@ func TestParametricVaRCalculation(t *testing.T) {
 		types.NewDecimalFromFloat(-0.02), // -2%
 	}
 
-	portfolioValue := types.NewDecimalFromFloat(500000.0) // $500k portfolio  
+	portfolioValue := types.NewDecimalFromFloat(500000.0) // $500k portfolio
 	confidence := types.NewDecimalFromFloat(99.0)         // 99% confidence level
 
 	varResult, err := calculator.CalculateParametricVaR(returns, portfolioValue, confidence)
@@ -103,7 +103,7 @@ func TestParametricVaRCalculation(t *testing.T) {
 	}
 
 	if varResult.ConfidenceLevel.Cmp(confidence) != 0 {
-		t.Errorf("Expected confidence level %s, got %s", 
+		t.Errorf("Expected confidence level %s, got %s",
 			confidence.String(), varResult.ConfidenceLevel.String())
 	}
 
@@ -174,7 +174,7 @@ func TestMonteCarloVaRCalculation(t *testing.T) {
 	}
 
 	if varResult.MonteCarloDetails.NumSimulations != config.NumSimulations {
-		t.Errorf("Expected %d simulations, got %d", 
+		t.Errorf("Expected %d simulations, got %d",
 			config.NumSimulations, varResult.MonteCarloDetails.NumSimulations)
 	}
 
@@ -195,7 +195,7 @@ func TestMonteCarloVaRCalculation(t *testing.T) {
 func TestVaRModelValidation(t *testing.T) {
 	// This test will FAIL initially - that's expected in TDD RED phase
 	calculator := NewVaRCalculator()
-	
+
 	// Reduce minimum observations for this test
 	config := calculator.GetConfig()
 	config.MinHistoricalObservations = 5
@@ -240,7 +240,7 @@ func TestVaRModelValidation(t *testing.T) {
 
 	// Verify backtesting results
 	if backtest.TotalObservations != len(outOfSampleReturns) {
-		t.Errorf("Expected %d observations, got %d", 
+		t.Errorf("Expected %d observations, got %d",
 			len(outOfSampleReturns), backtest.TotalObservations)
 	}
 
@@ -280,7 +280,7 @@ func TestVaRComponentAnalysis(t *testing.T) {
 			},
 		},
 		{
-			AssetSymbol: "GOOGL", 
+			AssetSymbol: "GOOGL",
 			Weight:      types.NewDecimalFromFloat(0.35), // 35%
 			Returns: []types.Decimal{
 				types.NewDecimalFromFloat(-0.03),
@@ -309,7 +309,7 @@ func TestVaRComponentAnalysis(t *testing.T) {
 
 	// Verify component analysis
 	if len(componentResult.Components) != len(positions) {
-		t.Errorf("Expected %d components, got %d", 
+		t.Errorf("Expected %d components, got %d",
 			len(positions), len(componentResult.Components))
 	}
 
@@ -319,11 +319,11 @@ func TestVaRComponentAnalysis(t *testing.T) {
 		if component.AssetSymbol == "" {
 			t.Error("Component asset symbol should not be empty")
 		}
-		
+
 		if component.ComponentVaR.IsZero() {
 			t.Errorf("Component VaR for %s should not be zero", component.AssetSymbol)
 		}
-		
+
 		totalComponentVaR = totalComponentVaR.Add(component.ComponentVaR.Abs())
 	}
 
@@ -339,7 +339,7 @@ func TestVaRComponentAnalysis(t *testing.T) {
 }
 
 func TestVaRConfigurationAndValidation(t *testing.T) {
-	// This test will FAIL initially - that's expected in TDD RED phase  
+	// This test will FAIL initially - that's expected in TDD RED phase
 	calculator := NewVaRCalculator()
 
 	// Test default configuration
@@ -350,11 +350,11 @@ func TestVaRConfigurationAndValidation(t *testing.T) {
 
 	// Test custom configuration
 	customConfig := VaRConfig{
-		DefaultMethod:           "Historical",
-		DefaultConfidenceLevel:  types.NewDecimalFromFloat(99.0),
+		DefaultMethod:             "Historical",
+		DefaultConfidenceLevel:    types.NewDecimalFromFloat(99.0),
 		MinHistoricalObservations: 250,
-		SupportedMethods:        []string{"Historical", "Parametric", "MonteCarlo"},
-		EnableBacktesting:       true,
+		SupportedMethods:          []string{"Historical", "Parametric", "MonteCarlo"},
+		EnableBacktesting:         true,
 	}
 
 	err := calculator.SetConfig(customConfig)

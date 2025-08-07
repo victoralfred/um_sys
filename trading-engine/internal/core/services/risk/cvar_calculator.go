@@ -30,61 +30,61 @@ type MonteCarloCVaRConfig struct {
 
 // CVaRTailStatistics contains statistics about the tail distribution
 type CVaRTailStatistics struct {
-	TailObservations  int           `json:"tail_observations"`
-	AverageTailLoss   types.Decimal `json:"average_tail_loss"`
-	WorstTailLoss     types.Decimal `json:"worst_tail_loss"`
-	TailVolatility    types.Decimal `json:"tail_volatility"`
+	TailObservations int           `json:"tail_observations"`
+	AverageTailLoss  types.Decimal `json:"average_tail_loss"`
+	WorstTailLoss    types.Decimal `json:"worst_tail_loss"`
+	TailVolatility   types.Decimal `json:"tail_volatility"`
 }
 
 // CVaRTailAnalysis contains detailed analysis of tail behavior
 type CVaRTailAnalysis struct {
-	TailReturns     []types.Decimal `json:"tail_returns"`
-	TailMean        types.Decimal   `json:"tail_mean"`
-	TailVolatility  types.Decimal   `json:"tail_volatility"`
-	TailSkewness    types.Decimal   `json:"tail_skewness"`
-	ExtremeValueIndex types.Decimal `json:"extreme_value_index"`
+	TailReturns       []types.Decimal `json:"tail_returns"`
+	TailMean          types.Decimal   `json:"tail_mean"`
+	TailVolatility    types.Decimal   `json:"tail_volatility"`
+	TailSkewness      types.Decimal   `json:"tail_skewness"`
+	ExtremeValueIndex types.Decimal   `json:"extreme_value_index"`
 }
 
 // MonteCarloCVaRDetails contains details specific to Monte Carlo CVaR
 type MonteCarloCVaRDetails struct {
-	NumSimulations     int             `json:"num_simulations"`
-	TailScenarios      []types.Decimal `json:"tail_scenarios"`
-	WorstScenario      types.Decimal   `json:"worst_scenario"`
-	BestScenario       types.Decimal   `json:"best_scenario"`
-	UseAntithetic      bool            `json:"use_antithetic"`
+	NumSimulations int             `json:"num_simulations"`
+	TailScenarios  []types.Decimal `json:"tail_scenarios"`
+	WorstScenario  types.Decimal   `json:"worst_scenario"`
+	BestScenario   types.Decimal   `json:"best_scenario"`
+	UseAntithetic  bool            `json:"use_antithetic"`
 }
 
 // CVaRResult contains comprehensive CVaR calculation results
 type CVaRResult struct {
-	Method             string                 `json:"method"`
-	ConfidenceLevel    types.Decimal          `json:"confidence_level"`
-	VaR                types.Decimal          `json:"var"`
-	CVaR               types.Decimal          `json:"cvar"`
-	PortfolioValue     types.Decimal          `json:"portfolio_value"`
-	Statistics         VaRStatistics          `json:"statistics"`
-	TailStatistics     CVaRTailStatistics     `json:"tail_statistics"`
-	TailAnalysis       *CVaRTailAnalysis      `json:"tail_analysis,omitempty"`
-	MonteCarloDetails  *MonteCarloCVaRDetails `json:"monte_carlo_details,omitempty"`
-	CalculatedAt       time.Time              `json:"calculated_at"`
+	Method            string                 `json:"method"`
+	ConfidenceLevel   types.Decimal          `json:"confidence_level"`
+	VaR               types.Decimal          `json:"var"`
+	CVaR              types.Decimal          `json:"cvar"`
+	PortfolioValue    types.Decimal          `json:"portfolio_value"`
+	Statistics        VaRStatistics          `json:"statistics"`
+	TailStatistics    CVaRTailStatistics     `json:"tail_statistics"`
+	TailAnalysis      *CVaRTailAnalysis      `json:"tail_analysis,omitempty"`
+	MonteCarloDetails *MonteCarloCVaRDetails `json:"monte_carlo_details,omitempty"`
+	CalculatedAt      time.Time              `json:"calculated_at"`
 }
 
 // CVaRScenarioResult contains CVaR results for a specific stress scenario
 type CVaRScenarioResult struct {
-	ScenarioName    string        `json:"scenario_name"`
-	CVaR            types.Decimal `json:"cvar"`
-	VaR             types.Decimal `json:"var"`
-	WorstCase       types.Decimal `json:"worst_case"`
-	AverageLoss     types.Decimal `json:"average_loss"`
-	CalculatedAt    time.Time     `json:"calculated_at"`
+	ScenarioName string        `json:"scenario_name"`
+	CVaR         types.Decimal `json:"cvar"`
+	VaR          types.Decimal `json:"var"`
+	WorstCase    types.Decimal `json:"worst_case"`
+	AverageLoss  types.Decimal `json:"average_loss"`
+	CalculatedAt time.Time     `json:"calculated_at"`
 }
 
 // CVaRStressResults contains results from stress scenario CVaR analysis
 type CVaRStressResults struct {
-	ScenarioResults      []CVaRScenarioResult `json:"scenario_results"`
-	WorstCaseStressCVaR  types.Decimal        `json:"worst_case_stress_cvar"`
-	AverageStressCVaR    types.Decimal        `json:"average_stress_cvar"`
-	StressScenarioCount  int                  `json:"stress_scenario_count"`
-	CalculatedAt         time.Time            `json:"calculated_at"`
+	ScenarioResults     []CVaRScenarioResult `json:"scenario_results"`
+	WorstCaseStressCVaR types.Decimal        `json:"worst_case_stress_cvar"`
+	AverageStressCVaR   types.Decimal        `json:"average_stress_cvar"`
+	StressScenarioCount int                  `json:"stress_scenario_count"`
+	CalculatedAt        time.Time            `json:"calculated_at"`
 }
 
 // CVaRCalculator handles Conditional Value-at-Risk calculations - TDD GREEN phase implementation
@@ -122,7 +122,7 @@ func NewCVaRCalculator() *CVaRCalculator {
 
 func (cvc *CVaRCalculator) CalculateHistoricalCVaR(returns []types.Decimal, portfolioValue, confidence types.Decimal) (CVaRResult, error) {
 	if len(returns) < cvc.config.MinHistoricalObservations {
-		return CVaRResult{}, fmt.Errorf("insufficient historical data: need at least %d observations, got %d", 
+		return CVaRResult{}, fmt.Errorf("insufficient historical data: need at least %d observations, got %d",
 			cvc.config.MinHistoricalObservations, len(returns))
 	}
 
@@ -150,7 +150,7 @@ func (cvc *CVaRCalculator) CalculateHistoricalCVaR(returns []types.Decimal, port
 	// Calculate VaR threshold index
 	alpha := types.NewDecimalFromFloat(100.0).Sub(confidence).Div(types.NewDecimalFromFloat(100.0))
 	thresholdIndex := int(math.Floor(alpha.Float64() * float64(len(returns))))
-	
+
 	if thresholdIndex >= len(sortedReturns) {
 		thresholdIndex = len(sortedReturns) - 1
 	}
@@ -166,10 +166,10 @@ func (cvc *CVaRCalculator) CalculateHistoricalCVaR(returns []types.Decimal, port
 	for _, ret := range tailReturns {
 		tailSum = tailSum.Add(ret)
 	}
-	
+
 	avgTailReturn := tailSum.Div(types.NewDecimalFromInt(int64(len(tailReturns))))
 	cvarAmount := avgTailReturn.Mul(portfolioValue)
-	
+
 	// Ensure CVaR is at least as extreme as VaR (coherent risk measure property)
 	if cvarAmount.Cmp(varResult.VaR) > 0 { // CVaR is less negative (better) than VaR
 		cvarAmount = varResult.VaR // Set CVaR equal to VaR as minimum
@@ -211,9 +211,9 @@ func (cvc *CVaRCalculator) CalculateParametricCVaR(returns []types.Decimal, port
 	// For parametric CVaR under normal distribution assumption:
 	// CVaR = μ + σ * φ(Φ^-1(α)) / α
 	// Where φ is PDF and Φ is CDF of standard normal
-	
+
 	alpha := types.NewDecimalFromFloat(100.0).Sub(confidence).Div(types.NewDecimalFromFloat(100.0))
-	
+
 	// Simplified implementation for TDD GREEN phase
 	// CVaR is typically 1.2-1.5x worse than VaR for normal distributions
 	cvarMultiplier := types.NewDecimalFromFloat(1.3)
@@ -241,7 +241,7 @@ func (cvc *CVaRCalculator) CalculateParametricCVaR(returns []types.Decimal, port
 
 func (cvc *CVaRCalculator) SetMonteCarloCVaRConfig(config MonteCarloCVaRConfig) error {
 	cvc.monteCarloConfig = config
-	
+
 	// Also update the underlying VaR calculator
 	mcConfig := MonteCarloConfig{
 		NumSimulations: config.NumSimulations,
@@ -264,7 +264,7 @@ func (cvc *CVaRCalculator) CalculateMonteCarloCVaR(returns []types.Decimal, port
 
 	// Extract simulated P&Ls from VaR result
 	simulatedPnLs := varResult.MonteCarloDetails.SimulatedPnLs
-	
+
 	// Sort simulated P&Ls (already sorted from VaR calculation)
 	sort.Slice(simulatedPnLs, func(i, j int) bool {
 		return simulatedPnLs[i].Cmp(simulatedPnLs[j]) < 0
@@ -273,7 +273,7 @@ func (cvc *CVaRCalculator) CalculateMonteCarloCVaR(returns []types.Decimal, port
 	// Calculate CVaR from Monte Carlo simulation
 	alpha := types.NewDecimalFromFloat(100.0).Sub(confidence).Div(types.NewDecimalFromFloat(100.0))
 	thresholdIndex := int(math.Floor(alpha.Float64() * float64(len(simulatedPnLs))))
-	
+
 	if thresholdIndex >= len(simulatedPnLs) {
 		thresholdIndex = len(simulatedPnLs) - 1
 	}
@@ -317,17 +317,17 @@ func (cvc *CVaRCalculator) CalculateMonteCarloCVaR(returns []types.Decimal, port
 
 func (cvc *CVaRCalculator) CalculateStressScenarioCVaR(scenarios map[string][]types.Decimal, portfolioValue, confidence types.Decimal) (CVaRStressResults, error) {
 	results := make([]CVaRScenarioResult, 0, len(scenarios))
-	
+
 	worstCVaR := types.Zero()
 	totalCVaR := types.Zero()
-	
+
 	for scenarioName, returns := range scenarios {
 		// Calculate CVaR for this scenario
 		cvarResult, err := cvc.CalculateHistoricalCVaR(returns, portfolioValue, confidence)
 		if err != nil {
 			return CVaRStressResults{}, fmt.Errorf("failed to calculate CVaR for scenario %s: %w", scenarioName, err)
 		}
-		
+
 		scenarioResult := CVaRScenarioResult{
 			ScenarioName: scenarioName,
 			CVaR:         cvarResult.CVaR,
@@ -336,17 +336,17 @@ func (cvc *CVaRCalculator) CalculateStressScenarioCVaR(scenarios map[string][]ty
 			AverageLoss:  cvarResult.TailStatistics.AverageTailLoss,
 			CalculatedAt: time.Now(),
 		}
-		
+
 		results = append(results, scenarioResult)
-		
+
 		// Track worst CVaR
 		if worstCVaR.IsZero() || cvarResult.CVaR.Cmp(worstCVaR) < 0 {
 			worstCVaR = cvarResult.CVaR
 		}
-		
+
 		totalCVaR = totalCVaR.Add(cvarResult.CVaR.Abs())
 	}
-	
+
 	// Calculate average CVaR
 	avgCVaR := types.Zero()
 	if len(results) > 0 {
@@ -380,25 +380,25 @@ func (cvc *CVaRCalculator) calculateTailStatistics(tailReturns []types.Decimal, 
 	// Calculate average tail loss
 	sum := types.Zero()
 	worst := tailReturns[0]
-	
+
 	for _, ret := range tailReturns {
 		sum = sum.Add(ret)
 		if ret.Cmp(worst) < 0 {
 			worst = ret
 		}
 	}
-	
+
 	avgTailReturn := sum.Div(types.NewDecimalFromInt(int64(len(tailReturns))))
 	avgTailLoss := avgTailReturn.Mul(portfolioValue)
 	worstTailLoss := worst.Mul(portfolioValue)
-	
+
 	// Calculate tail volatility
 	sumSquares := types.Zero()
 	for _, ret := range tailReturns {
 		diff := ret.Sub(avgTailReturn)
 		sumSquares = sumSquares.Add(diff.Mul(diff))
 	}
-	
+
 	tailVariance := sumSquares.Div(types.NewDecimalFromInt(int64(len(tailReturns))))
 	tailVolatility := types.NewDecimalFromFloat(math.Sqrt(tailVariance.Float64())).Mul(portfolioValue)
 
@@ -418,23 +418,23 @@ func (cvc *CVaRCalculator) calculateTailStatisticsFromPnL(tailPnLs []types.Decim
 	// Calculate statistics directly from P&L values
 	sum := types.Zero()
 	worst := tailPnLs[0]
-	
+
 	for _, pnl := range tailPnLs {
 		sum = sum.Add(pnl)
 		if pnl.Cmp(worst) < 0 {
 			worst = pnl
 		}
 	}
-	
+
 	avgTailLoss := sum.Div(types.NewDecimalFromInt(int64(len(tailPnLs))))
-	
+
 	// Calculate volatility
 	sumSquares := types.Zero()
 	for _, pnl := range tailPnLs {
 		diff := pnl.Sub(avgTailLoss)
 		sumSquares = sumSquares.Add(diff.Mul(diff))
 	}
-	
+
 	tailVariance := sumSquares.Div(types.NewDecimalFromInt(int64(len(tailPnLs))))
 	tailVolatility := types.NewDecimalFromFloat(math.Sqrt(tailVariance.Float64()))
 
@@ -464,7 +464,7 @@ func (cvc *CVaRCalculator) analyzeTailBehavior(tailReturns []types.Decimal) *CVa
 		diff := ret.Sub(tailMean)
 		sumSquares = sumSquares.Add(diff.Mul(diff))
 	}
-	
+
 	tailVariance := sumSquares.Div(types.NewDecimalFromInt(int64(len(tailReturns))))
 	tailVolatility := types.NewDecimalFromFloat(math.Sqrt(tailVariance.Float64()))
 

@@ -35,7 +35,7 @@ func TestHistoricalCVaRCalculation(t *testing.T) {
 	}
 
 	portfolioValue := types.NewDecimalFromFloat(1000000.0) // $1M portfolio
-	confidence := types.NewDecimalFromFloat(95.0)           // 95% confidence level
+	confidence := types.NewDecimalFromFloat(95.0)          // 95% confidence level
 
 	cvarResult, err := calculator.CalculateHistoricalCVaR(returns, portfolioValue, confidence)
 	if err != nil {
@@ -48,7 +48,7 @@ func TestHistoricalCVaRCalculation(t *testing.T) {
 	}
 
 	if cvarResult.ConfidenceLevel.Cmp(confidence) != 0 {
-		t.Errorf("Expected confidence level %s, got %s", 
+		t.Errorf("Expected confidence level %s, got %s",
 			confidence.String(), cvarResult.ConfidenceLevel.String())
 	}
 
@@ -117,7 +117,7 @@ func TestParametricCVaRCalculation(t *testing.T) {
 	}
 
 	if cvarResult.ConfidenceLevel.Cmp(confidence) != 0 {
-		t.Errorf("Expected confidence level %s, got %s", 
+		t.Errorf("Expected confidence level %s, got %s",
 			confidence.String(), cvarResult.ConfidenceLevel.String())
 	}
 
@@ -189,7 +189,7 @@ func TestMonteCarloCVaRCalculation(t *testing.T) {
 	}
 
 	if cvarResult.MonteCarloDetails.NumSimulations != config.NumSimulations {
-		t.Errorf("Expected %d simulations, got %d", 
+		t.Errorf("Expected %d simulations, got %d",
 			config.NumSimulations, cvarResult.MonteCarloDetails.NumSimulations)
 	}
 
@@ -216,7 +216,7 @@ func TestMonteCarloCVaRCalculation(t *testing.T) {
 func TestCVaRVsVaRComparison(t *testing.T) {
 	// This test will FAIL initially - that's expected in TDD RED phase
 	calculator := NewCVaRCalculator()
-	
+
 	// Reduce minimum observations for testing
 	config := calculator.GetConfig()
 	config.MinHistoricalObservations = 5
@@ -298,7 +298,7 @@ func TestCVaRTailRiskAnalysis(t *testing.T) {
 	// Test multiple confidence levels for tail analysis
 	for _, confidence := range []float64{95.0, 99.0, 99.5} {
 		confLevel := types.NewDecimalFromFloat(confidence)
-		
+
 		cvarResult, err := calculator.CalculateHistoricalCVaR(returns, portfolioValue, confLevel)
 		if err != nil {
 			t.Fatalf("Failed to calculate CVaR at %s%% confidence: %v", confLevel.String(), err)
@@ -318,11 +318,11 @@ func TestCVaRTailRiskAnalysis(t *testing.T) {
 		// Higher confidence levels should capture fewer but more extreme observations
 		expectedTailObs := int((100.0 - confidence) / 100.0 * float64(len(returns)))
 		actualTailObs := len(tailAnalysis.TailReturns)
-		
+
 		// Allow some tolerance in the expected count
 		tolerance := 2
 		if actualTailObs < expectedTailObs-tolerance || actualTailObs > expectedTailObs+tolerance {
-			t.Logf("At %s%% confidence: expected ~%d tail observations, got %d", 
+			t.Logf("At %s%% confidence: expected ~%d tail observations, got %d",
 				confLevel.String(), expectedTailObs, actualTailObs)
 		}
 
@@ -381,7 +381,7 @@ func TestCVaRStressScenarios(t *testing.T) {
 
 	// Verify stress scenario results
 	if len(stressResults.ScenarioResults) != len(scenarios) {
-		t.Errorf("Expected %d scenario results, got %d", 
+		t.Errorf("Expected %d scenario results, got %d",
 			len(scenarios), len(stressResults.ScenarioResults))
 	}
 
@@ -391,13 +391,13 @@ func TestCVaRStressScenarios(t *testing.T) {
 
 	for _, result := range stressResults.ScenarioResults {
 		found[result.ScenarioName] = true
-		
+
 		if result.ScenarioName == "NormalMarket" {
 			normalCVaR = result.CVaR
 		} else if result.ScenarioName == "CrisisMarket" {
 			crisisCVaR = result.CVaR
 		}
-		
+
 		if result.CVaR.IsZero() {
 			t.Errorf("Scenario %s should have non-zero CVaR", result.ScenarioName)
 		}

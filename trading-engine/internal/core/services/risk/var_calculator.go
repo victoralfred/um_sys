@@ -12,11 +12,11 @@ import (
 
 // VaRConfig contains configuration parameters for VaR calculations
 type VaRConfig struct {
-	DefaultMethod             string          `json:"default_method"`
-	DefaultConfidenceLevel    types.Decimal   `json:"default_confidence_level"`
-	MinHistoricalObservations int             `json:"min_historical_observations"`
-	SupportedMethods          []string        `json:"supported_methods"`
-	EnableBacktesting         bool            `json:"enable_backtesting"`
+	DefaultMethod             string        `json:"default_method"`
+	DefaultConfidenceLevel    types.Decimal `json:"default_confidence_level"`
+	MinHistoricalObservations int           `json:"min_historical_observations"`
+	SupportedMethods          []string      `json:"supported_methods"`
+	EnableBacktesting         bool          `json:"enable_backtesting"`
 }
 
 // MonteCarloConfig contains configuration for Monte Carlo simulations
@@ -36,21 +36,21 @@ type VaRStatistics struct {
 
 // MonteCarloDetails contains details specific to Monte Carlo VaR
 type MonteCarloDetails struct {
-	NumSimulations     int           `json:"num_simulations"`
-	WorstCaseScenario  types.Decimal `json:"worst_case_scenario"`
-	BestCaseScenario   types.Decimal `json:"best_case_scenario"`
-	SimulatedPnLs      []types.Decimal `json:"simulated_pnls,omitempty"`
+	NumSimulations    int             `json:"num_simulations"`
+	WorstCaseScenario types.Decimal   `json:"worst_case_scenario"`
+	BestCaseScenario  types.Decimal   `json:"best_case_scenario"`
+	SimulatedPnLs     []types.Decimal `json:"simulated_pnls,omitempty"`
 }
 
 // VaRResult contains comprehensive VaR calculation results
 type VaRResult struct {
-	Method             string             `json:"method"`
-	ConfidenceLevel    types.Decimal      `json:"confidence_level"`
-	VaR                types.Decimal      `json:"var"`
-	PortfolioValue     types.Decimal      `json:"portfolio_value"`
-	Statistics         VaRStatistics      `json:"statistics"`
-	MonteCarloDetails  *MonteCarloDetails `json:"monte_carlo_details,omitempty"`
-	CalculatedAt       time.Time          `json:"calculated_at"`
+	Method            string             `json:"method"`
+	ConfidenceLevel   types.Decimal      `json:"confidence_level"`
+	VaR               types.Decimal      `json:"var"`
+	PortfolioValue    types.Decimal      `json:"portfolio_value"`
+	Statistics        VaRStatistics      `json:"statistics"`
+	MonteCarloDetails *MonteCarloDetails `json:"monte_carlo_details,omitempty"`
+	CalculatedAt      time.Time          `json:"calculated_at"`
 }
 
 // PositionVaR represents VaR calculation data for a portfolio position
@@ -62,19 +62,19 @@ type PositionVaR struct {
 
 // ComponentVaR represents VaR contribution of a single component
 type ComponentVaR struct {
-	AssetSymbol    string        `json:"asset_symbol"`
-	Weight         types.Decimal `json:"weight"`
-	ComponentVaR   types.Decimal `json:"component_var"`
-	MarginalVaR    types.Decimal `json:"marginal_var"`
+	AssetSymbol         string        `json:"asset_symbol"`
+	Weight              types.Decimal `json:"weight"`
+	ComponentVaR        types.Decimal `json:"component_var"`
+	MarginalVaR         types.Decimal `json:"marginal_var"`
 	ContributionPercent types.Decimal `json:"contribution_percent"`
 }
 
 // ComponentVaRResult contains results of component VaR analysis
 type ComponentVaRResult struct {
-	PortfolioVaR    types.Decimal   `json:"portfolio_var"`
-	Components      []ComponentVaR  `json:"components"`
-	DiversificationBenefit types.Decimal `json:"diversification_benefit"`
-	CalculatedAt    time.Time       `json:"calculated_at"`
+	PortfolioVaR           types.Decimal  `json:"portfolio_var"`
+	Components             []ComponentVaR `json:"components"`
+	DiversificationBenefit types.Decimal  `json:"diversification_benefit"`
+	CalculatedAt           time.Time      `json:"calculated_at"`
 }
 
 // VaRBacktest contains backtesting results for VaR model validation
@@ -116,7 +116,7 @@ func NewVaRCalculator() *VaRCalculator {
 
 func (vc *VaRCalculator) CalculateHistoricalVaR(returns []types.Decimal, portfolioValue, confidence types.Decimal) (VaRResult, error) {
 	if len(returns) < vc.config.MinHistoricalObservations {
-		return VaRResult{}, fmt.Errorf("insufficient historical data: need at least %d observations, got %d", 
+		return VaRResult{}, fmt.Errorf("insufficient historical data: need at least %d observations, got %d",
 			vc.config.MinHistoricalObservations, len(returns))
 	}
 
@@ -134,7 +134,7 @@ func (vc *VaRCalculator) CalculateHistoricalVaR(returns []types.Decimal, portfol
 	// Calculate percentile index
 	percentile := types.NewDecimalFromFloat(100.0).Sub(confidence)
 	indexFloat := percentile.Div(types.NewDecimalFromFloat(100.0)).Mul(types.NewDecimalFromInt(int64(len(returns) - 1)))
-	
+
 	// Simple implementation: use floor of index
 	indexInt := int(math.Floor(indexFloat.Float64()))
 	if indexInt >= len(sortedReturns) {
@@ -200,7 +200,7 @@ func (vc *VaRCalculator) CalculateMonteCarloVaR(returns []types.Decimal, portfol
 
 	// Run Monte Carlo simulation
 	simulatedPnLs := make([]types.Decimal, vc.monteCarloConfig.NumSimulations)
-	
+
 	for i := 0; i < vc.monteCarloConfig.NumSimulations; i++ {
 		// Generate random return based on normal distribution
 		randomReturn := vc.generateNormalRandom(stats.Mean.Float64(), stats.StandardDeviation.Float64())
@@ -217,7 +217,7 @@ func (vc *VaRCalculator) CalculateMonteCarloVaR(returns []types.Decimal, portfol
 	percentile := types.NewDecimalFromFloat(100.0).Sub(confidence)
 	indexFloat := percentile.Div(types.NewDecimalFromFloat(100.0)).Mul(types.NewDecimalFromInt(int64(len(simulatedPnLs) - 1)))
 	indexInt := int(math.Floor(indexFloat.Float64()))
-	
+
 	if indexInt >= len(simulatedPnLs) {
 		indexInt = len(simulatedPnLs) - 1
 	}
@@ -226,10 +226,10 @@ func (vc *VaRCalculator) CalculateMonteCarloVaR(returns []types.Decimal, portfol
 
 	// Create Monte Carlo details
 	details := &MonteCarloDetails{
-		NumSimulations:     vc.monteCarloConfig.NumSimulations,
-		WorstCaseScenario:  simulatedPnLs[0],
-		BestCaseScenario:   simulatedPnLs[len(simulatedPnLs)-1],
-		SimulatedPnLs:      simulatedPnLs,
+		NumSimulations:    vc.monteCarloConfig.NumSimulations,
+		WorstCaseScenario: simulatedPnLs[0],
+		BestCaseScenario:  simulatedPnLs[len(simulatedPnLs)-1],
+		SimulatedPnLs:     simulatedPnLs,
 	}
 
 	return VaRResult{
@@ -245,7 +245,7 @@ func (vc *VaRCalculator) CalculateMonteCarloVaR(returns []types.Decimal, portfol
 
 func (vc *VaRCalculator) BacktestVaR(varResult VaRResult, outOfSampleReturns []types.Decimal, portfolioValue types.Decimal) (VaRBacktest, error) {
 	exceptions := 0
-	
+
 	// Count exceptions (actual losses exceeding VaR)
 	for _, ret := range outOfSampleReturns {
 		actualPnL := ret.Mul(portfolioValue)
@@ -256,9 +256,9 @@ func (vc *VaRCalculator) BacktestVaR(varResult VaRResult, outOfSampleReturns []t
 
 	totalObs := len(outOfSampleReturns)
 	exceptionRate := types.NewDecimalFromInt(int64(exceptions)).Div(types.NewDecimalFromInt(int64(totalObs))).Mul(types.NewDecimalFromInt(100))
-	
+
 	expectedRate := types.NewDecimalFromFloat(100.0).Sub(varResult.ConfidenceLevel)
-	
+
 	// Simple model validation: is exception rate reasonable?
 	tolerance := types.NewDecimalFromFloat(5.0) // 5% tolerance
 	isValid := exceptionRate.Sub(expectedRate).Abs().Cmp(tolerance) <= 0
@@ -277,34 +277,34 @@ func (vc *VaRCalculator) BacktestVaR(varResult VaRResult, outOfSampleReturns []t
 func (vc *VaRCalculator) CalculateComponentVaR(positions []PositionVaR, portfolioValue, confidence types.Decimal) (ComponentVaRResult, error) {
 	// Simple implementation for TDD GREEN phase
 	components := make([]ComponentVaR, len(positions))
-	
+
 	// Calculate individual VaRs and approximate portfolio VaR
 	portfolioVar := types.Zero()
-	
+
 	for i, position := range positions {
 		positionValue := position.Weight.Mul(portfolioValue)
-		
+
 		// Calculate position VaR using historical method
 		posVarResult, err := vc.CalculateHistoricalVaR(position.Returns, positionValue, confidence)
 		if err != nil {
 			// Fallback to simple calculation
 			components[i] = ComponentVaR{
-				AssetSymbol:    position.AssetSymbol,
-				Weight:         position.Weight,
-				ComponentVaR:   types.NewDecimalFromFloat(-1000.0), // Simple placeholder
-				MarginalVaR:    types.NewDecimalFromFloat(-500.0),
+				AssetSymbol:         position.AssetSymbol,
+				Weight:              position.Weight,
+				ComponentVaR:        types.NewDecimalFromFloat(-1000.0), // Simple placeholder
+				MarginalVaR:         types.NewDecimalFromFloat(-500.0),
 				ContributionPercent: position.Weight.Mul(types.NewDecimalFromInt(100)),
 			}
 		} else {
 			components[i] = ComponentVaR{
-				AssetSymbol:    position.AssetSymbol,
-				Weight:         position.Weight,
-				ComponentVaR:   posVarResult.VaR.Mul(position.Weight),
-				MarginalVaR:    posVarResult.VaR,
+				AssetSymbol:         position.AssetSymbol,
+				Weight:              position.Weight,
+				ComponentVaR:        posVarResult.VaR.Mul(position.Weight),
+				MarginalVaR:         posVarResult.VaR,
 				ContributionPercent: position.Weight.Mul(types.NewDecimalFromInt(100)),
 			}
 		}
-		
+
 		portfolioVar = portfolioVar.Add(components[i].ComponentVaR.Abs())
 	}
 
@@ -312,10 +312,10 @@ func (vc *VaRCalculator) CalculateComponentVaR(positions []PositionVaR, portfoli
 	portfolioVar = portfolioVar.Mul(types.NewDecimalFromInt(-1))
 
 	return ComponentVaRResult{
-		PortfolioVaR:          portfolioVar,
-		Components:            components,
+		PortfolioVaR:           portfolioVar,
+		Components:             components,
 		DiversificationBenefit: types.NewDecimalFromFloat(5000.0), // Simplified
-		CalculatedAt:          time.Now(),
+		CalculatedAt:           time.Now(),
 	}, nil
 }
 
@@ -374,7 +374,7 @@ func (vc *VaRCalculator) generateNormalRandom(mean, stddev float64) float64 {
 	// Box-Muller transformation for normal random number
 	u1 := vc.rng.Float64()
 	u2 := vc.rng.Float64()
-	
+
 	z0 := math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
 	return mean + stddev*z0
 }

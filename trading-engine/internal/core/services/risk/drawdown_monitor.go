@@ -34,32 +34,32 @@ type DrawdownHistoryEntry struct {
 
 // DrawdownStatistics contains comprehensive drawdown statistics
 type DrawdownStatistics struct {
-	MaxDrawdown           types.Decimal     `json:"max_drawdown"`
-	MaxDrawdownPercent    types.Decimal     `json:"max_drawdown_percent"`
-	AverageDrawdown       types.Decimal     `json:"average_drawdown"`
-	MaxDrawdownDuration   time.Duration     `json:"max_drawdown_duration"`
-	CurrentDrawdownDuration time.Duration   `json:"current_drawdown_duration"`
-	TotalDrawdownPeriods  int               `json:"total_drawdown_periods"`
+	MaxDrawdown             types.Decimal `json:"max_drawdown"`
+	MaxDrawdownPercent      types.Decimal `json:"max_drawdown_percent"`
+	AverageDrawdown         types.Decimal `json:"average_drawdown"`
+	MaxDrawdownDuration     time.Duration `json:"max_drawdown_duration"`
+	CurrentDrawdownDuration time.Duration `json:"current_drawdown_duration"`
+	TotalDrawdownPeriods    int           `json:"total_drawdown_periods"`
 }
 
 // DrawdownMonitor handles drawdown tracking and alerting - TDD GREEN phase implementation
 type DrawdownMonitor struct {
-	currentPeak      types.Decimal
-	currentValue     types.Decimal
-	maxDrawdown      types.Decimal
+	currentPeak        types.Decimal
+	currentValue       types.Decimal
+	maxDrawdown        types.Decimal
 	maxDrawdownPercent types.Decimal
-	config           DrawdownConfig
-	history          []DrawdownHistoryEntry
-	activeAlerts     []DrawdownAlert
-	lastUpdateTime   time.Time
+	config             DrawdownConfig
+	history            []DrawdownHistoryEntry
+	activeAlerts       []DrawdownAlert
+	lastUpdateTime     time.Time
 }
 
 // TDD GREEN phase - implement just enough to make tests pass
 func NewDrawdownMonitor() *DrawdownMonitor {
 	return &DrawdownMonitor{
-		currentPeak:      types.Zero(),
-		currentValue:     types.Zero(),
-		maxDrawdown:      types.Zero(),
+		currentPeak:        types.Zero(),
+		currentValue:       types.Zero(),
+		maxDrawdown:        types.Zero(),
 		maxDrawdownPercent: types.Zero(),
 		config: DrawdownConfig{
 			EnableRealTimeAlerts: true,
@@ -71,8 +71,8 @@ func NewDrawdownMonitor() *DrawdownMonitor {
 			MaxAcceptableDrawdown: types.NewDecimalFromFloat(20.0),
 			HistoryRetentionDays:  30,
 		},
-		history:      make([]DrawdownHistoryEntry, 0),
-		activeAlerts: make([]DrawdownAlert, 0),
+		history:        make([]DrawdownHistoryEntry, 0),
+		activeAlerts:   make([]DrawdownAlert, 0),
 		lastUpdateTime: time.Now(),
 	}
 }
@@ -96,11 +96,11 @@ func (dm *DrawdownMonitor) UpdateValue(value types.Decimal) error {
 
 	// Calculate current drawdown
 	currentDrawdown := dm.getCurrentDrawdownAmount()
-	
+
 	// Update maximum drawdown if current is larger
 	if currentDrawdown.Cmp(dm.maxDrawdown) > 0 {
 		dm.maxDrawdown = currentDrawdown
-		
+
 		// Update percentage
 		if dm.currentPeak.IsPositive() {
 			dm.maxDrawdownPercent = dm.maxDrawdown.Div(dm.currentPeak).Mul(types.NewDecimalFromInt(100))
@@ -127,12 +127,12 @@ func (dm *DrawdownMonitor) getCurrentDrawdownAmount() types.Decimal {
 	if dm.currentPeak.IsZero() {
 		return types.Zero()
 	}
-	
+
 	drawdown := dm.currentPeak.Sub(dm.currentValue)
 	if drawdown.IsNegative() {
 		return types.Zero()
 	}
-	
+
 	return drawdown
 }
 
@@ -144,7 +144,7 @@ func (dm *DrawdownMonitor) GetCurrentDrawdownPercent() types.Decimal {
 	if dm.currentPeak.IsZero() {
 		return types.Zero()
 	}
-	
+
 	drawdown := dm.getCurrentDrawdownAmount()
 	return drawdown.Div(dm.currentPeak).Mul(types.NewDecimalFromInt(100))
 }
@@ -165,35 +165,35 @@ func (dm *DrawdownMonitor) GetDrawdownStatistics() DrawdownStatistics {
 	// Calculate basic statistics
 	totalDrawdown := types.Zero()
 	drawdownCount := 0
-	
+
 	for _, entry := range dm.history {
 		if entry.Drawdown.IsPositive() {
 			totalDrawdown = totalDrawdown.Add(entry.Drawdown)
 			drawdownCount++
 		}
 	}
-	
+
 	averageDrawdown := types.Zero()
 	if drawdownCount > 0 {
 		averageDrawdown = totalDrawdown.Div(types.NewDecimalFromInt(int64(drawdownCount)))
 	}
-	
+
 	return DrawdownStatistics{
-		MaxDrawdown:           dm.maxDrawdown,
-		MaxDrawdownPercent:    dm.maxDrawdownPercent,
-		AverageDrawdown:       averageDrawdown,
-		MaxDrawdownDuration:   time.Hour * 24, // Simplified for TDD GREEN phase
-		CurrentDrawdownDuration: time.Hour,     // Simplified
-		TotalDrawdownPeriods:  drawdownCount,
+		MaxDrawdown:             dm.maxDrawdown,
+		MaxDrawdownPercent:      dm.maxDrawdownPercent,
+		AverageDrawdown:         averageDrawdown,
+		MaxDrawdownDuration:     time.Hour * 24, // Simplified for TDD GREEN phase
+		CurrentDrawdownDuration: time.Hour,      // Simplified
+		TotalDrawdownPeriods:    drawdownCount,
 	}
 }
 
 func (dm *DrawdownMonitor) processAlerts() {
 	currentDrawdownPercent := dm.GetCurrentDrawdownPercent()
-	
+
 	// Clear existing alerts
 	dm.activeAlerts = make([]DrawdownAlert, 0)
-	
+
 	// Check each threshold
 	for _, threshold := range dm.config.AlertThresholds {
 		if currentDrawdownPercent.Cmp(threshold) >= 0 {
