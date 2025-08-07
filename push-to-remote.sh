@@ -35,33 +35,19 @@ git remote set-url origin https://${GITHUB_TOKEN}@github.com/victoralfred/um_sys
 echo -e "${GREEN}Remote configured successfully${NC}"
 echo -e "${YELLOW}Pushing branches to remote...${NC}"
 
-# Push main branch
-echo -e "${YELLOW}Pushing main branch...${NC}"
-git push -u origin main
+# Get all local branches
+echo -e "${YELLOW}Discovering local branches...${NC}"
+BRANCHES=$(git branch --format='%(refname:short)')
 
-# Push staging branch
-echo -e "${YELLOW}Pushing staging branch...${NC}"
-git push -u origin staging
-
-# Push all feature branches
-echo -e "${YELLOW}Pushing feature branches...${NC}"
-git push -u origin feature/database-schema-design
-git push -u origin feature/user-repository-implementation
-git push -u origin feature/jwt-authentication
-git push -u origin feature/rbac-system
-git push -u origin feature/mfa-support
-git push -u origin feature/subscription-billing
-git push -u origin feature/password-policies
-git push -u origin feature/auth-implementation
-git push -u origin feature/analytics-extensions
-git push -u origin feature/background-jobs
-git push -u origin feature/enterprise-features
-git push -u origin feature/feature-flags
-git push -u origin feature/job-configuration-api
-git push -u origin feature/redis-session-management
-git push -u origin feature/refresh-logout-handlers
-git push -u origin feature/usage-analytics-metrics
-git push -u origin feature/user-profile-management
+# Push each branch
+for branch in $BRANCHES; do
+    echo -e "${YELLOW}Pushing branch: $branch...${NC}"
+    if git push -u origin "$branch" 2>/dev/null; then
+        echo -e "${GREEN}✓ Successfully pushed $branch${NC}"
+    else
+        echo -e "${RED}✗ Failed to push $branch (may not exist locally or has no changes)${NC}"
+    fi
+done
 
 echo -e "${GREEN}✓ All branches pushed successfully!${NC}"
 
