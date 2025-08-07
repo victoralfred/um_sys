@@ -151,7 +151,7 @@ func NewPosition(id string, asset *Asset, initialTransaction PositionTransaction
 	}
 
 	// Update market value and unrealized P&L
-	position.UpdateMarketPrice(initialTransaction.Price)
+	_ = position.UpdateMarketPrice(initialTransaction.Price)
 
 	return position, nil
 }
